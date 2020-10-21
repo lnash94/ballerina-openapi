@@ -47,9 +47,9 @@ public class CodeGeneratorTest {
     List<String> list2 = new ArrayList<>();
     Filter filter = new Filter(list1, list2);
 
-    @Test(description = "Test Ballerina skeleton generation", enabled = false)
+    @Test(description = "Test Ballerina skeleton generation", enabled = true)
     public void generateSkeleton() {
-        final String serviceName = "openapipetstore";
+        final String serviceName = "petstore";
         String definitionPath = RES_DIR + File.separator + "petstore.yaml";
         CodeGenerator generator = new CodeGenerator();
 
@@ -57,13 +57,14 @@ public class CodeGeneratorTest {
             String expectedServiceContent = getStringFromGivenBalFile(expectedServiceFile, "generateSkeleton.bal");
             generator.generateService(definitionPath, definitionPath, definitionPath, serviceName,
                     resourcePath.toString(), filter);
-            if (Files.exists(resourcePath.resolve("openapipetstore-service.bal"))) {
-                String generatedService = getStringFromGivenBalFile(resourcePath, "openapipetstore-service.bal");
+            if (Files.exists(resourcePath.resolve("petstore-service.bal"))) {
+                String generatedService = getStringFromGivenBalFile(resourcePath, "petstore-service.bal");
                 generatedService = (generatedService.trim()).replaceAll("\\s+", "");
                 expectedServiceContent = (expectedServiceContent.trim()).replaceAll("\\s+", "");
-
+                System.out.println(generatedService);
+                System.out.println(expectedServiceContent);
                 Assert.assertTrue(generatedService.contains(expectedServiceContent));
-                deleteGeneratedFiles("openapipetstore-service.bal");
+                deleteGeneratedFiles("petstore-service.bal");
             } else {
                 Assert.fail("Service was not generated");
             }
@@ -72,7 +73,7 @@ public class CodeGeneratorTest {
         }
     }
 
-    @Test(description = "Test Ballerina client generation", enabled = false)
+    @Test(description = "Test Ballerina client generation", enabled = true)
     public void generateClient() {
         final String clientName = "openapipetstore";
         String definitionPath = RES_DIR + File.separator + "petstore.yaml";
