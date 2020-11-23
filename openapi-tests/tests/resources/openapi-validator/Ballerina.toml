@@ -1,7 +1,17 @@
 [package]
 org= "ballerina"
 name= "openapiValidator"
-version= "2.0.0"
+version= "0.1.0"
 
 [build-options]
 observability-included=true
+
+[[dependency]]
+org = "ballerina"
+name = "http"
+version = "@stdlib.http.version@"
+
+[[dependency]]
+org = "ballerina"
+name = "log"
+version = "@stdlib.log.version@"

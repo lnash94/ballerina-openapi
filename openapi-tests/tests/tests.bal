@@ -5,24 +5,26 @@ import ballerina/stringutils;
 import ballerina/test;
 
 const BAL_EXEC_PATH = "bal_exec_path";
-const OPENAPI_PROJECT = "tests/resources/openapi-validator";
+const OPENAPI_PROJECT = "tests/resources/openapiValidator";
 const UTF_8 = "UTF-8";
 
 @test:Config {}
 public function testOpenapiValidatorOff() {
     system:Process|error execResult = system:exec(config:getAsString(BAL_EXEC_PATH), {}, OPENAPI_PROJECT, "build",
-    "openapi-validator-off");
+    "openapiValidatorOff");
     string[] logLines = getLogLinesFromExecResult(execResult);
     string msg = "Couldn't find a Ballerina service resource for the path '/{param1}/{param2}' which is documented in the OpenAPI contract";
+    io:println(logLines);
     validateLog(logLines[0],"warning","openapi-validator-off.bal:14:1", msg);
 }
 
 @test:Config {}
 public function testOpenapiValidatorOn() {
     system:Process|error execResult = system:exec(config:getAsString(BAL_EXEC_PATH), {}, OPENAPI_PROJECT, "build",
-    "openapi-validator-on");
+    "openapiValidatorOn");
     string[] logLines = getLogLinesFromExecResult(execResult);
     string msg = "Couldn't find a Ballerina service resource for the path '/{param1}/{param2}' which is documented in the OpenAPI contract";
+    io:println(logLines);
     validateLog(logLines[0],"error","openapi-validator-on.bal:13:9:",msg);
 
 
