@@ -41,6 +41,12 @@ jar {
                 'Implementation-Version': project.version)
     }
 }
+def packageName = "openapi"
+def packageOrg = "ballerina"
+
+def resourceOpenAPIPath = file("$project.projectDir/moduel-ballerina-openapi/build/")
+def targetOpenAPIPath = file("${buildDir}/target/extracted-distributions/${packageName}-${packageOrg}-zip")
+
 
 task unpackJballerinaTools(type: Copy) {
     configurations.jbalTools.resolvedConfiguration.resolvedArtifacts.each { artifact ->
@@ -75,6 +81,7 @@ task copyStdlibs(type: Copy) {
         }
     }
 }
+
 
 def ballerinaConfigFile = new File("$project.projectDir/Ballerina.toml")
 def tomlVersion = project.version.split("-")[0]
@@ -120,8 +127,44 @@ task ballerinaIntegrationTests {
     dependsOn(copyStdlibs)
     dependsOn(updateTomlFile)
     finalizedBy(revertTomlFile)
+
+    //copy openapi caches
+    copy {
+        from file("$resourceOpenAPIPath/cache_parent/cache")
+        into file("$targetOpenAPIPath/cache")
+    }
+    //copy openapi balo
+    copy {
+        from file("$resourceOpenAPIPath/cache_parent/balo")
+        into file("$targetOpenAPIPath/balo")
+    }
+    //copy openapi libs
+    copy {
+        from file("$resourceOpenAPIPath/lib_parent/libs")
+        into file(project.projectDir.absolutePath +
+                """/build/target/extracted-distributions/jballerina-tools-zip/jballerina-tools-
+${ballerinaLangVersion}/bre/lib""")
+    }
+
+    //copy openapi cache
+    copy {
+        from file("$resourceOpenAPIPath/cache_parent/cache/ballerina")
+        into file(project.projectDir.absolutePath +
+                """/build/target/extracted-distributions/jballerina-tools-zip/jballerina-tools-
+${ballerinaLangVersion}/repo/cache/balerina""")
+    }
+
+    //copy openapi balo
+    copy {
+        from file("$resourceOpenAPIPath/cache_parent/balo/ballerina")
+        into file(project.projectDir.absolutePath +
+                """/build/target/extracted-distributions/jballerina-tools-zip/jballerina-tools-
+${ballerinaLangVersion}/repo/balo/balerina""")
+    }
+
     doLast {
         def distributionBinPath =  project.projectDir.absolutePath + "/build/target/extracted-distributions/jballerina-tools-zip/jballerina-tools-${ballerinaLangVersion}/bin"
+
         exec {
             workingDir project.projectDir
             environment "JAVA_OPTS", "-DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true"
@@ -140,6 +183,7 @@ test {
 //ballerinaBuild.dependsOn ":ballerina-to-openapi-generator:build"
 ballerinaIntegrationTests.dependsOn ":openapi-cli:build"
 ballerinaIntegrationTests.dependsOn ":openapi-validator:build"
+//ballerinaIntegrationTests.dependsOn ":module-ballerina-openapi:publish"
 unpackStdLibs.dependsOn unpackJballerinaTools
 copyStdlibs.dependsOn unpackStdLibs
 ballerinaIntegrationTests.dependsOn copyStdlibs
