@@ -36,8 +36,20 @@ org = "ballerina"
 name = "log"
 version = "@stdlib.log.version@"
 
+[[dependency]]
+org = "ballerina"
+name = "openapi"
+version = "@stdlib.openapi.version@"
+
+
 [[platform.java11.dependency]]
 path = "../module-ballerina-openapi/build/libs/module-ballerina-openapi-@project.version@.jar"
 groupId = "ballerina"
 artifactId = "openapi"
+version = "@project.version@"
+
+[[platform.java11.dependency]]
+path = "../openapi-validator/build/libs/openapi-validator-@project.version@.jar"
+groupId = "ballerina"
+artifactId = "openapi-validator"
 version = "@project.version@"

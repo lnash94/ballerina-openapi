@@ -5,7 +5,7 @@ import ballerina/openapi;
         listener http:Listener ep0 = new(9091, config = {host: "localhost"});
 
 @openapi:ServiceInfo {
-        contract: "modules/openapiValidatorOn/resources/openapi_validator_on.yaml"
+        contract: "/openapi_validator_on.yaml"
         }
 @http:ServiceConfig {
         basePath: "/api/v1"
