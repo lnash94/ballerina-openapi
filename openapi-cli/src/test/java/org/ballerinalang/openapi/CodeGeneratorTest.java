@@ -111,6 +111,8 @@ public class CodeGeneratorTest {
                 generatedService = (generatedService.trim()).replaceAll("\\s+", "");
                 expectedServiceContent = (expectedServiceContent.trim()).replaceAll("\\s+", "");
 
+                System.out.println(generatedService);
+
                 Assert.assertTrue(generatedService.contains(expectedServiceContent));
                 deleteGeneratedFiles("openapipetstore-service.bal");
             } else {

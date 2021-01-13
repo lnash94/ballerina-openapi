@@ -6,8 +6,8 @@ service / on ep0 {
 
 # + payload - Request body payload.
 # + return - Error value if an error occurred, and return nil otherwise
-    resource function post requestBody(http:Caller caller, http:Request req
-    , @http:Payload {} User  payload) returns error? {}
+    resource function post requestBody(http:Caller caller, http:Request req , @http:Payload {} User  payload) returns error? {
+
+    }
 
 }
-
