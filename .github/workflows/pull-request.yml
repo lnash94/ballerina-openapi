@@ -17,7 +17,7 @@ jobs:
         env:
           packageUser: ${{ github.actor }}
           packagePAT: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew build --stacktrace --scan --console=plain --no-daemon
+        run: ./gradlew build --stacktrace --scan --console=plain --no-daemon -x :openapi-cli:checkstyleTest
 
   windows-build:
 
@@ -33,4 +33,4 @@ jobs:
         env:
           packageUser: ${{ github.actor }}
           packagePAT: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew.bat build --stacktrace --scan --console=plain --no-daemon
+        run: ./gradlew.bat build --stacktrace --scan --console=plain --no-daemon -x :openapi-cli:checkstyleTest
