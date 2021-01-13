@@ -61,7 +61,7 @@ public class CodeGeneratorTest {
                 String generatedService = getStringFromGivenBalFile(resourcePath, "openapipetstore-service.bal");
                 generatedService = (generatedService.trim()).replaceAll("\\s+", "");
                 expectedServiceContent = (expectedServiceContent.trim()).replaceAll("\\s+", "");
-
+                System.out.println(generatedService);
                 Assert.assertTrue(generatedService.contains(expectedServiceContent));
                 deleteGeneratedFiles("openapipetstore-service.bal");
             } else {
