@@ -13,7 +13,11 @@ service {{servers.0.basePath}} on {{#servers}}ep{{@index}}{{#unless @last}}, {{/
 {{#parameterList}}# + {{paramName}} - {{paramDescription}}{{/parameterList}}
 {{#if requestBody includeZero=true }}# + payload - Request body payload. {{/if}}
 # + return - Error value if an error occurred, and return nil otherwise
-    resource function {{opMethod}} {{{opName}}}(http:Caller caller, http:Request req {{#parameterList}}{{#isQueryParam}}, {{#refType}}{{{refType}}}{{/refType}}{{^refType}}{{#paramType}}{{>inlineSchema}}? {{/paramType}}{{/refType}} {{paramName}}{{/isQueryParam}}{{/parameterList}}{{#if requestBody includeZero=true}}, @http:Payload {}{{#contentType}}{{> inlineSchema}}{{/contentType}} payload{{/if}}) returns error? {{=<% %>=}}{<%={{ }}=%>
+    resource function {{opMethod}} {{{opName}}}(http:Caller caller, http:Request req
+    {{#parameterList}}{{#isQueryParam}}, {{#refType}}{{{refType}}}{{/refType}}{{^refType}}{{#paramType}}{{>inlineSchema
+    }}? {{/paramType}}{{/refType}} {{paramName}}{{/isQueryParam}}{{/parameterList}}{{#requestBody }},
+    @http:Payload {} {{#contentType}} wwxxxww {{> inlineSchema}}{{/contentType}} payload{{/requestBody}}) returns error?
+    {{=<% %>=}}{<%={{ }}=%>
 
     }
 {{/operationsList}}{{/pathList}}

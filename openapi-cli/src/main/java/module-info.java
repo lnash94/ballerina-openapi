@@ -34,6 +34,8 @@ module io.ballerina.ballerina.openapi {
     requires swagger.models;
     requires swagger.parser;
     requires swagger.parser.v2.converter;
+    requires swagger.parser.v3;
+    requires org.apache.commons.lang3;
     exports org.ballerinalang.ballerina;
     exports org.ballerinalang.openapi;
     exports org.ballerinalang.openapi.cmd;
