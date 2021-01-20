@@ -41,8 +41,6 @@ import io.ballerina.projects.Project;
 import io.ballerina.projects.ProjectException;
 import io.ballerina.projects.ProjectKind;
 import io.ballerina.projects.directory.ProjectLoader;
-import io.swagger.models.Model;
-import io.swagger.models.Swagger;
 import io.swagger.models.properties.ArrayProperty;
 import io.swagger.models.properties.BooleanProperty;
 import io.swagger.models.properties.ByteArrayProperty;
@@ -54,6 +52,8 @@ import io.swagger.models.properties.Property;
 import io.swagger.models.properties.StringProperty;
 import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.core.util.Yaml;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import org.apache.commons.io.FilenameUtils;
 import org.ballerinalang.ballerina.service.ConverterConstants;
@@ -83,11 +83,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -231,7 +229,7 @@ public class OpenApiConverterUtils {
                 OpenApiServiceMapper openApiServiceMapper = new OpenApiServiceMapper(httpAlias, openApiAlias,
                         semanticModel);
 
-                Swagger openapi = getOpenApiDefinition(new Swagger(), openApiServiceMapper, serviceName,
+                OpenAPI openapi = getOpenApiDefinition(new OpenAPI(), openApiServiceMapper, serviceName,
                         syntaxTree, endpoints, semanticModel);
                 String openApiSource = openApiServiceMapper.generateOpenApiString(openapi);
                 SwaggerParseResult result = new OpenAPIParser().readContents(openApiSource, null, null);
@@ -274,10 +272,11 @@ public class OpenApiConverterUtils {
         return null;
     }
 
-    private static Swagger getOpenApiDefinition(Swagger openapi, OpenApiServiceMapper openApiServiceMapper,
+    private static OpenAPI getOpenApiDefinition(OpenAPI openapi, OpenApiServiceMapper openApiServiceMapper,
                                                 String serviceName, SyntaxTree topCompilationUnit,
                                                 List<ListenerDeclarationNode> endpoints, SemanticModel semanticModel) {
-        Map<String, Model> definitions = new HashMap<>();
+//        Map<String, Model> definitions = new HashMap<>();
+        Components definitions = new Components();
 
         ModulePartNode modulePartNode = syntaxTree.rootNode();
         for (Node node : modulePartNode.members()) {
@@ -287,7 +286,7 @@ public class OpenApiConverterUtils {
                 ServiceDeclarationNode serviceDefinition = (ServiceDeclarationNode) node;
                 //Take base path of service
                 String currentServiceName = getServiceBasePath(serviceDefinition);
-                if (openapi.getBasePath() == null) {
+                if (openapi.getServers() == null) {
                     openapi = new OpenApiEndpointMapper()
                         .convertBoundEndpointsToOpenApi(endpoints, serviceDefinition, openapi);
 
@@ -310,7 +309,8 @@ public class OpenApiConverterUtils {
                     // TODO schema generation
 //                    model.setProperties(propertyMap);
 //                    definitions.put(typeNode.getName().getValue(), model);
-                    openapi.setDefinitions(definitions);
+//                    openapi.setDefinitions(definitions);
+                    openapi.setComponents(definitions);
                 }
             }
         }

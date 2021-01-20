@@ -27,14 +27,18 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeList;
 import io.ballerina.compiler.syntax.tree.ServiceDeclarationNode;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
-import io.swagger.models.Info;
-import io.swagger.models.Swagger;
+import io.swagger.models.Path;
 import io.swagger.util.Json;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.ballerinalang.ballerina.OpenApiConverterUtils.getServiceBasePath;
 
@@ -71,7 +75,7 @@ public class OpenApiServiceMapper {
      * @param openapi OpenApi definition
      * @return String representation of current service object.
      */
-    public String generateOpenApiString(Swagger openapi) {
+    public String generateOpenApiString(OpenAPI openapi) {
         try {
             return objectMapper.writeValueAsString(openapi);
         } catch (JsonProcessingException e) {
@@ -86,8 +90,8 @@ public class OpenApiServiceMapper {
      * @param service ballerina @Service object to be map to openapi definition
      * @return OpenApi object which represent current service.
      */
-    public Swagger convertServiceToOpenApi(ServiceDeclarationNode service) {
-        Swagger openapi = new Swagger();
+    public OpenAPI convertServiceToOpenApi(ServiceDeclarationNode service) {
+        OpenAPI openapi = new OpenAPI();
         String currentServiceName = getServiceBasePath(service);
         return convertServiceToOpenApi(service, openapi, currentServiceName);
     }
@@ -100,11 +104,16 @@ public class OpenApiServiceMapper {
      * @param basePath for string base path
      * @return OpenApi object which represent current service.
      */
-    public Swagger convertServiceToOpenApi(ServiceDeclarationNode service, Swagger openapi, String basePath) {
+    public OpenAPI convertServiceToOpenApi(ServiceDeclarationNode service, OpenAPI openapi, String basePath) {
         // Setting default values.
-        Info info = new Info().version("1.0.0").title(basePath.replace("/", "_"));
+//        Info info = new Info().version("1.0.0").title(basePath.replace("/", "_"));
+        Info info = new Info();
+        info.setVersion("1.0.0");
+        info.setTitle(basePath.replace("/", "_"));
         openapi.setInfo(info);
-        openapi.setBasePath(basePath.trim());
+        Server server = new Server();
+        server.setUrl(basePath.trim());
+        openapi.addServersItem(server);
 
         NodeList<Node> functions = service.members();
         List<FunctionDefinitionNode> resource = new ArrayList<>();
@@ -115,7 +124,14 @@ public class OpenApiServiceMapper {
             }
         }
         OpenApiResourceMapper resourceMapper = new OpenApiResourceMapper(openapi, semanticModel);
-        openapi.setPaths(resourceMapper.convertResourceToPath(resource));
+        Map<String, Path> stringPathMap = resourceMapper.convertResourceToPath(resource);
+        if (!stringPathMap.isEmpty()) {
+            Paths paths = new Paths();
+            for (Map.Entry<String, Path> path : stringPathMap.entrySet()) {
+
+            }
+            openapi.setPaths(paths);
+        }
         return openapi;
     }
 

@@ -21,7 +21,7 @@ package org.ballerinalang.ballerina.service;
 
 import io.ballerina.compiler.api.SemanticModel;
 import io.ballerina.compiler.api.symbols.ArrayTypeSymbol;
-import io.ballerina.compiler.api.symbols.FieldSymbol;
+import io.ballerina.compiler.api.symbols.RecordFieldSymbol;
 import io.ballerina.compiler.api.symbols.RecordTypeSymbol;
 import io.ballerina.compiler.api.symbols.Symbol;
 import io.ballerina.compiler.api.symbols.TypeDescKind;
@@ -46,13 +46,10 @@ import io.ballerina.compiler.syntax.tree.ServiceDeclarationNode;
 import io.ballerina.compiler.syntax.tree.SimpleNameReferenceNode;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.compiler.syntax.tree.TypeDescriptorNode;
-import io.swagger.models.Model;
-import io.swagger.models.ModelImpl;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.RefModel;
 import io.swagger.models.Response;
-import io.swagger.models.Swagger;
 import io.swagger.models.parameters.BodyParameter;
 import io.swagger.models.parameters.CookieParameter;
 import io.swagger.models.parameters.FormParameter;
@@ -60,13 +57,15 @@ import io.swagger.models.parameters.HeaderParameter;
 import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.PathParameter;
 import io.swagger.models.parameters.QueryParameter;
-import io.swagger.models.properties.ArrayProperty;
-import io.swagger.models.properties.BooleanProperty;
-import io.swagger.models.properties.IntegerProperty;
-import io.swagger.models.properties.ObjectProperty;
 import io.swagger.models.properties.Property;
-import io.swagger.models.properties.RefProperty;
-import io.swagger.models.properties.StringProperty;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.media.ArraySchema;
+import io.swagger.v3.oas.models.media.BooleanSchema;
+import io.swagger.v3.oas.models.media.IntegerSchema;
+import io.swagger.v3.oas.models.media.ObjectSchema;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
 import org.ballerinalang.ballerina.Constants;
 import org.ballerinalang.net.http.HttpConstants;
 
@@ -92,7 +91,7 @@ import static org.ballerinalang.net.http.HttpConstants.HTTP_METHOD_GET;
  * This class will do resource mapping from ballerina to openApi.
  */
 public class OpenApiResourceMapper {
-    private final Swagger openApiDefinition;
+    private final OpenAPI openApiDefinition;
     private final SemanticModel semanticModel;
 
     /**
@@ -101,7 +100,7 @@ public class OpenApiResourceMapper {
      * @param openApi      The OpenAPI definition.
      * @param semanticModel
      */
-    OpenApiResourceMapper(Swagger openApi, SemanticModel semanticModel) {
+    OpenApiResourceMapper(OpenAPI openApi, SemanticModel semanticModel) {
         this.openApiDefinition = openApi;
         this.semanticModel = semanticModel;
     }
@@ -257,7 +256,7 @@ public class OpenApiResourceMapper {
                     RequiredParameterNode bodyParam = (RequiredParameterNode) expr;
                     if (bodyParam.typeName() instanceof TypeDescriptorNode && !bodyParam.annotations().isEmpty()) {
                         NodeList<AnnotationNode> annotations = bodyParam.annotations();
-                        Map<String, Model> definitions = new HashMap<>();
+                        Components definitions = new Components();
                         for (AnnotationNode annotation: annotations) {
                             handlePayloadAnnotation(operationAdaptor, (RequiredParameterNode) expr, bodyParam,
                                     definitions, annotation);
@@ -269,7 +268,7 @@ public class OpenApiResourceMapper {
     }
 
     private void handlePayloadAnnotation(OperationAdaptor operationAdaptor, RequiredParameterNode expr,
-                                         RequiredParameterNode queryParam, Map<String, Model> definitions,
+                                         RequiredParameterNode queryParam, Components definitions,
                                          AnnotationNode annotation) {
 
         if ((annotation.annotReference().toString()).trim().equals(HTTP_PAYLOAD) &&
@@ -306,7 +305,7 @@ public class OpenApiResourceMapper {
 
     private void handleMultipleMIMETypes(OperationAdaptor operationAdaptor, BodyParameter bodyParameter,
                                          SeparatedNodeList<MappingFieldNode> fields, RequiredParameterNode expr,
-                                         RequiredParameterNode queryParam, Map<String, Model> definitions) {
+                                         RequiredParameterNode queryParam, Components definitions) {
 
         for (MappingFieldNode fieldNode: fields) {
             if (fieldNode.children() != null) {
@@ -340,7 +339,7 @@ public class OpenApiResourceMapper {
     }
 
     private void handleReferencePayload(OperationAdaptor operationAdaptor, RequiredParameterNode expr,
-                                         RequiredParameterNode queryParam, Map<String, Model> definitions,
+                                         RequiredParameterNode queryParam, Components definitions,
                                         String mediaType) {
 
         // Creating request body - required.
@@ -362,23 +361,24 @@ public class OpenApiResourceMapper {
         }
     }
 
-    private void handleRecordPayload(RequiredParameterNode queryParam, Map<String, Model> definitions,
+    private void handleRecordPayload(RequiredParameterNode queryParam, Components definitions,
                                      TypeSymbol typeSymbol) {
         String componentName = typeSymbol.name().trim();
-        ModelImpl messageModel = new ModelImpl();
+//        ModelImpl messageModel = new ModelImpl();
+        Schema messageModel = new Schema();
         if (typeSymbol instanceof TypeReferenceTypeSymbol) {
             TypeReferenceTypeSymbol typeRef = (TypeReferenceTypeSymbol) typeSymbol;
             // Handle record type request body
             if (typeRef.typeDescriptor() instanceof RecordTypeSymbol) {
                 RecordTypeSymbol recordTypeSymbol = (RecordTypeSymbol) typeRef.typeDescriptor();
-                List<FieldSymbol> rfields = recordTypeSymbol.fieldDescriptors();
-                for (FieldSymbol field: rfields) {
+                List<RecordFieldSymbol> rfields = recordTypeSymbol.fieldDescriptors();
+                for (RecordFieldSymbol field: rfields) {
                     String type = field.typeDescriptor().typeKind().toString().toLowerCase(Locale.ENGLISH);
-                    Property property = getOpenApiProperty(type);
-                    if (type.equals(Constants.TYPE_REFERENCE) && property instanceof RefProperty) {
+                    Schema property = getOpenApiProperty(type);
+                    if (type.equals(Constants.TYPE_REFERENCE) && property instanceof ObjectSchema) {
                         RefModel refModel = new RefModel();
                         refModel.setReference(field.typeDescriptor().name().trim());
-                        ((RefProperty) property).set$ref(refModel.get$ref());
+                        (property).set$ref(refModel.get$ref());
                         Optional<TypeSymbol> recordSymbol = semanticModel.type(field.location().lineRange());
                         TypeSymbol recordVariable =  recordSymbol.orElseThrow();
                         if (recordVariable.typeKind().equals(TypeDescKind.TYPE_REFERENCE)) {
@@ -386,23 +386,24 @@ public class OpenApiResourceMapper {
                             handleRecordPayload(queryParam, definitions, typeRecord);
                         }
                     }
-                    if (property instanceof ArrayProperty) {
-                        setArrayProperty(queryParam, definitions, field, (ArrayProperty) property);
+                    if (property instanceof ArraySchema) {
+                        setArrayProperty(queryParam, definitions, field, (ArraySchema) property);
                     }
-                    messageModel.property(field.name(), property);
+//                    messageModel.property(field.name(), property);
+                    messageModel = property;
                 }
             }
         }
 
-        if (!definitions.containsKey(componentName)) {
+        if (!definitions.getSchemas().containsKey(componentName)) {
             //Set properties for the schema
-            definitions.put(componentName, messageModel);
-            this.openApiDefinition.setDefinitions(definitions);
+            definitions.addSchemas(componentName, messageModel);
+            this.openApiDefinition.setComponents(definitions);
         }
     }
 
-    private void setArrayProperty(RequiredParameterNode queryParam, Map<String, Model> definitions, FieldSymbol field,
-                                  ArrayProperty property) {
+    private void setArrayProperty(RequiredParameterNode queryParam, Components definitions,
+                                  RecordFieldSymbol field, ArraySchema property) {
 
         TypeSymbol symbol = field.typeDescriptor();
         int arrayDimensions = 0;
@@ -412,11 +413,11 @@ public class OpenApiResourceMapper {
             symbol = arrayTypeSymbol.memberTypeDescriptor();
         }
         //handle record field has nested record array type ex: Tag[] tags
-        Property symbolProperty  = getOpenApiProperty(symbol.typeKind().getName());
-        if (symbolProperty instanceof RefProperty) {
+        Schema symbolProperty  = getOpenApiProperty(symbol.typeKind().getName());
+        if (symbolProperty instanceof ObjectSchema) {
             RefModel refModel = new RefModel();
             refModel.setReference(symbol.name().trim());
-            ((RefProperty) symbolProperty).set$ref(refModel.get$ref());
+            (symbolProperty).set$ref(refModel.get$ref());
 
             //Set the record model to the definition
             if (symbol.typeKind().equals(TypeDescKind.TYPE_REFERENCE)) {
@@ -426,15 +427,15 @@ public class OpenApiResourceMapper {
         }
         //Handle nested array type
         if (arrayDimensions > 1) {
-            property.setItems(handleArray(arrayDimensions - 1, symbolProperty, new ArrayProperty()));
+            property.setItems(handleArray(arrayDimensions - 1, symbolProperty, new ArraySchema()));
         } else {
             property.setItems(symbolProperty);
         }
     }
 
-    private ArrayProperty handleArray(int arrayDimensions, Property property, ArrayProperty arrayProperty) {
+    private ArraySchema handleArray(int arrayDimensions, Schema property, ArraySchema arrayProperty) {
         if (arrayDimensions > 1) {
-            ArrayProperty narray = new ArrayProperty();
+            ArraySchema narray = new ArraySchema();
             arrayProperty.setItems(handleArray(arrayDimensions - 1, property,  narray));
         } else if (arrayDimensions == 1) {
             arrayProperty.setItems(property);
@@ -624,30 +625,30 @@ public class OpenApiResourceMapper {
      * @param type ballerina type name as a String
      * @return OpenApi {@link Property} for type defined by {@code type}
      */
-    private Property getOpenApiProperty(String type) {
-        Property property;
+    private Schema getOpenApiProperty(String type) {
+        Schema property;
 
         switch (type) {
             case Constants.STRING:
-                property = new StringProperty();
+                property = new StringSchema();
                 break;
             case Constants.BOOLEAN:
-                property = new BooleanProperty();
+                property = new BooleanSchema();
                 break;
             case Constants.ARRAY:
-                property = new ArrayProperty();
+                property = new ArraySchema();
                 break;
             case Constants.NUMBER:
             case Constants.INT:
             case Constants.INTEGER:
-                property = new IntegerProperty();
+                property = new IntegerSchema();
                 break;
             case Constants.TYPE_REFERENCE:
             case Constants.TYPEREFERENCE:
-                property = new RefProperty();
+                property = new ObjectSchema();
                 break;
             default:
-                property = new ObjectProperty();
+                property = new ObjectSchema();
                 break;
         }
 

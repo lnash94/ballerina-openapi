@@ -32,7 +32,8 @@ import io.ballerina.compiler.syntax.tree.SeparatedNodeList;
 import io.ballerina.compiler.syntax.tree.ServiceDeclarationNode;
 import io.ballerina.compiler.syntax.tree.SpecificFieldNode;
 import io.swagger.models.Scheme;
-import io.swagger.models.Swagger;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.servers.Server;
 import org.ballerinalang.ballerina.Constants;
 
 import java.util.ArrayList;
@@ -55,8 +56,8 @@ public class OpenApiEndpointMapper {
      * @param openapi   openapi definition to attach extracted information
      * @return openapi definition with Server information
      */
-    public Swagger convertBoundEndpointsToOpenApi(List<ListenerDeclarationNode> endpoints,
-                                                  ServiceDeclarationNode service, Swagger openapi) {
+    public OpenAPI convertBoundEndpointsToOpenApi(List<ListenerDeclarationNode> endpoints,
+                                                  ServiceDeclarationNode service, OpenAPI openapi) {
 
         //TODO check absence of endpoints and services
 //        if (endpoints == null || service == null || service.getAttachedExprs().isEmpty()
@@ -65,7 +66,7 @@ public class OpenApiEndpointMapper {
 //            return openapi;
 //        }
         if (openapi == null) {
-            return new Swagger();
+            return new OpenAPI();
         }
         for (ListenerDeclarationNode ep : endpoints) {
             // At the moment only the last bound endpoint will be populated in openapi
@@ -80,7 +81,7 @@ public class OpenApiEndpointMapper {
         return openapi;
     }
 
-    private void extractServer(ListenerDeclarationNode ep, Swagger openapi) {
+    private void extractServer(ListenerDeclarationNode ep, OpenAPI openapi) {
 
         ImplicitNewExpressionNode  bTypeInit = (ImplicitNewExpressionNode) ep.initializer();
         Optional<ParenthesizedArgList> list = bTypeInit.parenthesizedArgList();
@@ -109,8 +110,11 @@ public class OpenApiEndpointMapper {
         if (port != null) {
             host += ':' + port;
         }
-        openapi.setHost(host);
-        openapi.setSchemes(schemes);
+        Server server = new Server();
+        server.setUrl(host);
+//        openapi.setHost(host);
+//        openapi.setSchemes(schemes);
+        openapi.addServersItem(server);
     }
 
     private String extractHost(MappingConstructorExpressionNode bLangRecordLiteral) {
