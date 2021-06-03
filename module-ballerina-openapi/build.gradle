@@ -17,13 +17,13 @@
 description = 'Ballerina - OpenAPI Ballerina Generator'
 
 configurations {
-    jbalTools
+//    jbalTools
 }
 
 dependencies {
-    jbalTools ("org.ballerinalang:jballerina-tools:${ballerinaLangVersion}") {
-        transitive = false
-    }
+//    jbalTools ("org.ballerinalang:jballerina-tools:${ballerinaLangVersion}") {
+//        transitive = false
+//    }
     implementation project(':openapi-validator')
     implementation project(':openapi-cli')
 }
@@ -126,6 +126,19 @@ buildscript {
     }
 }
 
+task copyExternalJars {
+    doLast {
+        copy {
+            from targetNativeJar
+            into file("$artifactLibParent/libs")
+        }
+        copy {
+            from targetOpenApiCliJar
+            into file("$artifactLibParent/libs")
+        }
+    }
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -151,9 +164,13 @@ updateCompilerTomlFile.dependsOn updateTomlFile
 ballerinaBuild.dependsOn ":${packageName}-cli:build"
 ballerinaBuild.dependsOn ":${packageName}-validator:build"
 ballerinaBuild.dependsOn updateCompilerTomlFile
-ballerinaBuild.dependsOn initializeVariables
 ballerinaBuild.finalizedBy revertTomlFile
 build.dependsOn ballerinaBuild
 
+publishToMavenLocal.dependsOn copyExternalJars
+publish.dependsOn copyExternalJars
 publishToMavenLocal.dependsOn build
 publish.dependsOn build
+
+//publishToMavenLocal.dependsOn build
+//publish.dependsOn build
