@@ -23,9 +23,7 @@ import io.ballerina.compiler.syntax.tree.ParameterNode;
 import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
 import io.ballerina.compiler.syntax.tree.ResourcePathParameterNode;
 import io.ballerina.openapi.validator.error.CompilationError;
-import io.ballerina.projects.plugins.SyntaxNodeAnalysisContext;
-import io.ballerina.tools.diagnostics.DiagnosticSeverity;
-import io.swagger.v3.oas.models.Components;
+import io.ballerina.openapi.validator.model.MetaData;
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.parameters.HeaderParameter;
@@ -35,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.ballerina.openapi.validator.Constants.ARRAY;
 import static io.ballerina.openapi.validator.Constants.SQUARE_BRACKETS;
@@ -52,45 +50,59 @@ import static io.ballerina.openapi.validator.ValidatorUtils.unescapeIdentifier;
  *
  * @since 1.1.0
  */
-public class ParameterValidator extends NodeValidator {
+public class ParameterValidator extends AbstractMetaData implements SectionValidator, Validator {
     private final Map<String, Node> parameters;
     private final List<Parameter> oasParameters;
+    // This default location is map to relevant resource function
 
-    public ParameterValidator(ValidatorContext validatorContext, Map<String, Node> parameters,
-                              List<Parameter> oasParameters) {
-        super(validatorContext);
+
+    public ParameterValidator(MetaData metaData, Map<String, Node> parameters, List<Parameter> oasParameters) {
+        super(metaData.getContext(), metaData.getOpenAPI(), metaData.getPath(), metaData.getMethod(),
+                metaData.getSeverity(), metaData.getLocation());
         this.parameters = parameters;
         this.oasParameters = oasParameters;
+    }
+
+    @Override
+    public void validate() {
+        //Ballerina to OAS parameter validation , here we validate query, path parameters.
+        validateBallerina();
+
+        //OAS->Ballerina parameter validate
+        if (oasParameters != null) {
+            validateOpenAPI();
+        }
     }
 
     /**
      * Validate OAS parameter against ballerina parameters.
      */
     @Override
-    public void validateOpenAPIToBallerina() {
-        if (oasParameters == null) {
-            return;
-        }
+    public void validateOpenAPI() {
+
         oasParameters.forEach(parameter -> {
             if (parameter.get$ref() != null) {
                 Optional<String> parameterName = extractReferenceType(parameter.get$ref());
                 if (parameterName.isEmpty()) {
                     return;
                 }
-                parameter = validatorContext.getOpenAPI().getComponents().getParameters().get(parameterName.get());
+                parameter = openAPI.getComponents().getParameters().get(parameterName.get());
             }
             if (!(parameter instanceof HeaderParameter) ||
                     parameter.getIn() != null && !parameter.getIn().equals("header")) {
-                boolean isImplemented = false;
-                for (Map.Entry<String, Node> param: parameters.entrySet()) {
-                    if (parameter.getName().equals(param.getKey())) {
-                        isImplemented = true;
+                // headerValidation
+                AtomicBoolean isImplemented = new AtomicBoolean(false);
+                Parameter finalParameter1 = parameter;
+                parameters.forEach((paramName, paramNode) -> {
+                    // avoid headers
+                    if (finalParameter1.getName().equals(paramName)) {
+                        isImplemented.set(true);
                     }
-                }
-                if (!isImplemented) {
+                });
+                if (!isImplemented.get()) {
                     // error message
-                    reportDiagnostic(validatorContext, CompilationError.MISSING_PARAMETER, parameter.getName(),
-                            validatorContext.getMethod(), validatorContext.getPath());
+                    reportDiagnostic(context, CompilationError.MISSING_PARAMETER,
+                            location, severity, parameter.getName(), method, path);
                 }
             }
         });
@@ -98,9 +110,10 @@ public class ParameterValidator extends NodeValidator {
 
     /**
      * This function is used to validate the ballerina resource parameter against to openapi parameters.
+     *
      */
     @Override
-    public void validateBallerinaToOpenAPI() {
+    public void validateBallerina() {
         for (Map.Entry<String, Node> parameter : parameters.entrySet()) {
             boolean isExist = false;
             String parameterName = unescapeIdentifier(parameter.getKey());
@@ -129,14 +142,13 @@ public class ParameterValidator extends NodeValidator {
                             return;
                         }
                         oasParameterName = name.get();
-                        Components components = validatorContext.getOpenAPI().getComponents();
-                        schema = components.getParameters().get(oasParameterName).getSchema();
-                        if (components.getParameters().get(oasParameterName).getName() != null) {
-                            oasParameterName = components.getParameters().get(oasParameterName).getName();
+                        schema = openAPI.getComponents().getParameters().get(oasParameterName).getSchema();
+                        if (openAPI.getComponents().getParameters().get(oasParameterName).getName() != null) {
+                            oasParameterName = openAPI.getComponents().getParameters().get(oasParameterName).getName();
                         }
                     }
-                    //There can be situations where path parameter name change with its schema name, therefore
-                    // we need to avoid name checking in path parameter
+                    //There are situation path parameter name change with its schema name, therefore we need to avoid
+                    // name checking in path parameter
                     //ex:
                     // paths:
                     //  /applications/{obsId}/metrics:
@@ -158,10 +170,6 @@ public class ParameterValidator extends NodeValidator {
                     //TODO: map<json> type matching
                     //TODO: Handle optional
                     //Array mapping
-                    SyntaxNodeAnalysisContext context = validatorContext.getContext();
-                    DiagnosticSeverity severity = validatorContext.getSeverity();
-                    String method = validatorContext.getMethod();
-                    String path = validatorContext.getPath();
                     if (type.isEmpty() || Objects.requireNonNull(ballerinaType).contains(SQUARE_BRACKETS) &&
                             !ballerinaType.equals(type.get() + SQUARE_BRACKETS)) {
                         // This special concatenation is used to check the array query parameters
@@ -180,13 +188,13 @@ public class ParameterValidator extends NodeValidator {
                     }
                 }
             }
-
             if (!isExist) {
                 // undocumented parameter
-                reportDiagnostic(validatorContext.getContext(), CompilationError.UNDEFINED_PARAMETER,
-                        parameter.getValue().location(), validatorContext.getSeverity(), parameterName,
-                        validatorContext.getMethod(), getNormalizedPath(validatorContext.getPath()));
+                reportDiagnostic(context, CompilationError.UNDEFINED_PARAMETER, parameter.getValue().location(),
+                        severity, parameterName, method,
+                        getNormalizedPath(path));
             }
         }
     }
+
 }

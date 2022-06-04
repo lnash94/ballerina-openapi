@@ -23,6 +23,7 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeList;
 import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
 import io.ballerina.openapi.validator.error.CompilationError;
+import io.ballerina.openapi.validator.model.MetaData;
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.parameters.HeaderParameter;
@@ -31,6 +32,7 @@ import io.swagger.v3.oas.models.parameters.Parameter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.ballerina.openapi.validator.Constants.HEADER_NAME;
 import static io.ballerina.openapi.validator.Constants.HTTP_HEADER;
@@ -48,22 +50,35 @@ import static io.ballerina.openapi.validator.ValidatorUtils.unescapeIdentifier;
  *
  * @since 1.1.0
  */
-public class HeaderValidator extends NodeValidator {
+public class HeaderValidator extends AbstractMetaData implements SectionValidator, Validator {
     private final Map<String, Node> balHeaders;
     private final List<Parameter> oasParameters;
 
-    public HeaderValidator(ValidatorContext validatorContext, Map<String, Node> balHeaders,
-                           List<Parameter> oasParameters) {
-        super(validatorContext);
+    public HeaderValidator(MetaData metaData, Map<String, Node> balHeaders, List<Parameter> oasParameters) {
+        super(metaData.getContext(), metaData.getOpenAPI(), metaData.getPath(), metaData.getMethod(),
+                metaData.getSeverity(), metaData.getLocation());
         this.balHeaders = balHeaders;
         this.oasParameters = oasParameters;
     }
 
+    @Override
+    public void validate() {
+        //Ballerina to openAPI header validation.
+        validateBallerina();
+        //OAS->Ballerina header validation
+        if (oasParameters == null) {
+            return;
+        }
+        validateOpenAPI();
+    }
+
+
     /**
      * This function is used to validate the ballerina resource header against to openapi header.
+     *
      */
     @Override
-    public void validateBallerinaToOpenAPI() {
+    public void validateBallerina() {
         for (Map.Entry<String, Node> balHeader: balHeaders.entrySet()) {
             //TODO: Nullable and default value assign scenarios
 
@@ -84,7 +99,7 @@ public class HeaderValidator extends NodeValidator {
             }
             if (!annotations.isEmpty()) {
                 List<String> headers = extractAnnotationFieldDetails(HTTP_HEADER, HEADER_NAME, annotations,
-                        validatorContext.getContext().semanticModel());
+                        context.semanticModel());
                 if (!headers.isEmpty()) {
                     headerName = headers.get(0);
                 }
@@ -107,23 +122,18 @@ public class HeaderValidator extends NodeValidator {
                             if (arrayItemType.isEmpty() || !ballerinaType.equals(arrayItemType.get() +
                                     SQUARE_BRACKETS)) {
                                 // This special concatenation is used to check the array header parameters
-                                reportDiagnostic(validatorContext.getContext(),
-                                        CompilationError.TYPE_MISMATCH_HEADER_PARAMETER,
-                                        headerNode.location(), validatorContext.getSeverity(),
-                                        items + SQUARE_BRACKETS,
-                                        ballerinaType, headerName, validatorContext.getMethod(),
-                                        getNormalizedPath(validatorContext.getPath()));
+                                reportDiagnostic(context, CompilationError.TYPE_MISMATCH_HEADER_PARAMETER,
+                                        headerNode.location(), severity, items + SQUARE_BRACKETS,
+                                        ballerinaType, headerName, method, getNormalizedPath(path));
                                 break;
                             }
                         }
 
                         Optional<String> type = convertOpenAPITypeToBallerina(headerType);
                         if (type.isEmpty() || !ballerinaType.equals(type.get())) {
-                            reportDiagnostic(validatorContext.getContext(),
-                                    CompilationError.TYPE_MISMATCH_HEADER_PARAMETER,
-                                    headerNode.location(), validatorContext.getSeverity(), headerType,
-                                    ballerinaType, headerName, validatorContext.getMethod(),
-                                    getNormalizedPath(validatorContext.getPath()));
+                            reportDiagnostic(context, CompilationError.TYPE_MISMATCH_HEADER_PARAMETER,
+                                    headerNode.location(), severity, headerType, ballerinaType, headerName,
+                                    method, getNormalizedPath(path));
                             break;
                         }
                     }
@@ -132,9 +142,8 @@ public class HeaderValidator extends NodeValidator {
 
             if (!isHeaderDocumented) {
                 // undefined header
-                reportDiagnostic(validatorContext.getContext(), CompilationError.UNDEFINED_HEADER,
-                        balHeader.getValue().location(), validatorContext.getSeverity(), headerName,
-                        validatorContext.getMethod(), getNormalizedPath(validatorContext.getPath()));
+                reportDiagnostic(context, CompilationError.UNDEFINED_HEADER, balHeader.getValue().location(),
+                        severity, headerName, method, getNormalizedPath(path));
             }
         }
     }
@@ -143,29 +152,28 @@ public class HeaderValidator extends NodeValidator {
      * Validate header from OpenAPI headers to Ballerina Headers.
      */
     @Override
-    public void validateOpenAPIToBallerina() {
-        if (oasParameters == null) {
-            return;
-        }
+    public void validateOpenAPI() {
         oasParameters.forEach(parameter -> {
             if (parameter.get$ref() != null) {
                 Optional<String> parameterName = extractReferenceType(parameter.get$ref());
                 if (parameterName.isEmpty()) {
                     return;
                 }
-                parameter = validatorContext.getOpenAPI().getComponents().getParameters().get(parameterName.get());
+                parameter = openAPI.getComponents().getParameters().get(parameterName.get());
             }
             if (parameter instanceof HeaderParameter || parameter.getIn() != null &&
                     parameter.getIn().equals("header")) {
-                boolean isHeaderExist = false;
-                for (Map.Entry<String, Node> header: balHeaders.entrySet()) {
-                    if (parameter.getName().equals(header.getKey())) {
-                        isHeaderExist = true;
+                AtomicBoolean isHeaderExist = new AtomicBoolean(false);
+                Parameter finalParameter = parameter;
+                balHeaders.forEach((header, headerNode) -> {
+                    if (finalParameter.getName().trim().equals(header)) {
+                        isHeaderExist.set(true);
                     }
-                }
-                if (!isHeaderExist) {
-                    reportDiagnostic(validatorContext, CompilationError.MISSING_HEADER, parameter.getName(),
-                            validatorContext.getMethod(), validatorContext.getPath());
+                });
+                if (!isHeaderExist.get()) {
+                    reportDiagnostic(context, CompilationError.MISSING_HEADER,
+                            location, severity, parameter.getName(), method,
+                            path);
                 }
             }
         });

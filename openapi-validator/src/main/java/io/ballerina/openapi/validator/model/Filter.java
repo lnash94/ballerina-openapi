@@ -71,27 +71,27 @@ public class Filter {
         private List<String> excludeOperation;
         private DiagnosticSeverity kind = DiagnosticSeverity.ERROR;
 
-        public FilterBuilder withTag(List<String> tag) {
+        public FilterBuilder tag(List<String> tag) {
             this.tag = tag;
             return this;
         }
 
-        public FilterBuilder withExcludeTag(List<String> excludeTag) {
+        public FilterBuilder excludeTag(List<String> excludeTag) {
             this.excludeTag = excludeTag;
             return this;
         }
 
-        public FilterBuilder withOperation(List<String> operation) {
+        public FilterBuilder operation(List<String> operation) {
             this.operation = operation;
             return this;
         }
 
-        public FilterBuilder withExcludeOperation(List<String> excludeOperation) {
+        public FilterBuilder excludeOperation(List<String> excludeOperation) {
             this.excludeOperation = excludeOperation;
             return this;
         }
 
-        public FilterBuilder withKind(DiagnosticSeverity kind) {
+        public FilterBuilder kind(DiagnosticSeverity kind) {
             this.kind = kind;
             return this;
         }

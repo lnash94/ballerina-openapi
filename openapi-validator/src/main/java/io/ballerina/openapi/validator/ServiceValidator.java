@@ -23,9 +23,9 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeList;
 import io.ballerina.compiler.syntax.tree.ReturnTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.ServiceDeclarationNode;
-import io.ballerina.compiler.syntax.tree.TypeDescriptorNode;
 import io.ballerina.openapi.validator.error.CompilationError;
 import io.ballerina.openapi.validator.model.Filter;
+import io.ballerina.openapi.validator.model.MetaData;
 import io.ballerina.openapi.validator.model.OpenAPIPathSummary;
 import io.ballerina.openapi.validator.model.ResourceMethod;
 import io.ballerina.openapi.validator.model.ResourcePathSummary;
@@ -186,6 +186,7 @@ public class ServiceValidator implements Validator {
 
     /**
      * This validation happens ballerina service against to openapi specification.
+     *
      */
     private void validateBalServiceWithOAS(Map<String, ResourcePathSummary> resourcePaths,
                                            List<OpenAPIPathSummary> oasPaths) {
@@ -203,37 +204,31 @@ public class ServiceValidator implements Validator {
 
             for (Map.Entry<String, ResourceMethod> method : methods.entrySet()) {
                 assert oasPath != null;
-                ValidatorContext validatorContext = new ValidatorContext(context, openAPI, path.getKey(),
-                        method.getKey(), filter.getKind(), method.getValue().getLocation());
+                MetaData metaData = new MetaData(context, openAPI, path.getKey(), method.getKey(), filter.getKind(),
+                        method.getValue().getLocation());
                 Map<String, Operation> operations = oasPath.getOperations();
                 Operation oasOperation = operations.get(method.getKey());
                 // Parameters validation
                 List<Parameter> oasParameters = oasOperation.getParameters();
-                ParameterValidator parameterValidator = new ParameterValidator(validatorContext,
+                ParameterValidator parameterValidator = new ParameterValidator(metaData,
                         method.getValue().getParameters(), oasParameters);
                 parameterValidator.validate();
 
                 // Headers validation
                 Map<String, Node> balHeaders = method.getValue().getHeaders();
-                HeaderValidator headerValidator = new HeaderValidator(validatorContext, balHeaders, oasParameters);
+                HeaderValidator headerValidator = new HeaderValidator(metaData, balHeaders, oasParameters);
                 headerValidator.validate();
 
                 // Request body validation
-                RequestBodyValidator requestBodyValidator = new RequestBodyValidator(validatorContext,
+                RequestBodyValidator requestBodyValidator = new RequestBodyValidator(metaData,
                         oasOperation.getRequestBody(), method.getValue().getBody());
                 requestBodyValidator.validate();
 
                 // Return Type validation
                 ReturnTypeDescriptorNode returnNode = method.getValue().getReturnNode();
                 ApiResponses responses = oasOperation.getResponses();
-                TypeDescriptorNode type;
-                if (returnNode == null) {
-                    type = null;
-                } else {
-                    type = (TypeDescriptorNode) returnNode.type();
-                }
-                ReturnTypeValidator returnTypeValidator = new ReturnTypeValidator(validatorContext, type,
-                        responses);
+
+                ReturnTypeValidator returnTypeValidator = new ReturnTypeValidator(metaData, returnNode, responses);
                 returnTypeValidator.validate();
             }
         }

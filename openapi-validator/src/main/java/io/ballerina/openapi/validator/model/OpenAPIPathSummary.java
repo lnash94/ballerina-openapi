@@ -47,6 +47,10 @@ public class OpenAPIPathSummary {
         this.path = path;
     }
 
+    public List<String> getAvailableOperations() {
+        return availableOperations;
+    }
+
     public void addOperation(String method, Operation operation) {
         this.operations.put(method, operation);
     }

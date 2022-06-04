@@ -66,7 +66,7 @@ import static io.ballerina.openapi.validator.error.CompilationError.NON_HTTP_SER
 import static io.ballerina.openapi.validator.error.CompilationError.UNEXPECTED_EXCEPTIONS;
 
 /**
- * This PreValidator class contains validation for given service if it is an HTTP service, and summarise all the
+ * This PreValidator class contains validation for given service if it is a http service and summaries all the
  * resources.
  *
  * @since 1.1.0
@@ -75,12 +75,10 @@ public class PreValidator implements Validator {
     private Filter filter;
     private SyntaxNodeAnalysisContext context;
     private OpenAPI openAPI;
-
     public void initialize(SyntaxNodeAnalysisContext context) {
         this.context = context;
         this.openAPI = null;
     }
-    
     public Filter getFilter() {
         return filter;
     }
@@ -106,16 +104,17 @@ public class PreValidator implements Validator {
         }
 
         ServiceDeclarationNode serviceNode = (ServiceDeclarationNode) this.context.node();
+        Path ballerinaFilePath = getBallerinaFilePath();
+        Optional<MetadataNode> metadata = serviceNode.metadata();
+        boolean validatorEnable = false;
         Location location = serviceNode.location();
+
         // 2.Test given service is http service, if not this will return WARNING and execute the ballerina
         // file.
         if (!isHttpService(serviceNode, context.semanticModel())) {
             reportDiagnostic(context, NON_HTTP_SERVICE, location, DiagnosticSeverity.WARNING);
             return;
         }
-
-        Optional<MetadataNode> metadata = serviceNode.metadata();
-        boolean validatorEnable = false;
 
         // 3. Preprocessing - return OpenAPI and filter
         if (metadata.isEmpty()) {
@@ -168,7 +167,6 @@ public class PreValidator implements Validator {
                             case ATTRIBUTE_CONTRACT_PATH:
                                 Path openAPIPath = Paths.get(expression.toString().replaceAll("\"",
                                         "").trim());
-                                Path ballerinaFilePath = getBallerinaFilePath();
                                 this.openAPI = getOpenAPIContract(ballerinaFilePath, location, openAPIPath);
                                 if (openAPI != null) {
                                     validatorEnable = true;
@@ -176,22 +174,22 @@ public class PreValidator implements Validator {
                                 break;
                             case ATTRIBUTE_FAIL_ON_ERRORS:
                                 if (expression.toString().contains(TRUE)) {
-                                    filterBuilder.withKind(DiagnosticSeverity.ERROR);
+                                    filterBuilder.kind(DiagnosticSeverity.ERROR);
                                 } else {
-                                    filterBuilder.withKind(DiagnosticSeverity.WARNING);
+                                    filterBuilder.kind(DiagnosticSeverity.WARNING);
                                 }
                                 break;
                             case Constants.ATTRIBUTE_TAGS:
-                                filterBuilder.withTag(values);
+                                filterBuilder.tag(values);
                                 break;
                             case ATTRIBUTE_OPERATIONS:
-                                filterBuilder.withOperation(values);
+                                filterBuilder.operation(values);
                                 break;
                             case ATTRIBUTE_EXCLUDE_TAGS:
-                                filterBuilder.withExcludeTag(values);
+                                filterBuilder.excludeTag(values);
                                 break;
                             case ATTRIBUTE_EXCLUDE_OPERATIONS:
-                                filterBuilder.withExcludeOperation(values);
+                                filterBuilder.excludeOperation(values);
                                 break;
                             default:
                                 break;
