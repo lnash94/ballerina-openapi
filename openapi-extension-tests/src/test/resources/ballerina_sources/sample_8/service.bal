@@ -18,7 +18,7 @@ import ballerina/http;
 import ballerina/openapi;
 
 @openapi:ServiceInfo{
-    contract: "service_openapi.json"
+    contract: ""
 }
 @http:ServiceConfig {compression: {enable: http:COMPRESSION_AUTO}}
 service / on new http:Listener(9090) {

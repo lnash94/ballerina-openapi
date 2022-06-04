@@ -211,6 +211,46 @@ public class ResponseTests {
                 "response/rs_with_service_and_payload_annotation.yaml");
     }
 
+    @Test(description = "When the response has all the status codes")
+    public void testForAllReturnType() throws IOException {
+        Path ballerinaFilePath = RES_DIR.resolve("response/response_code.bal");
+        OpenApiConverter openApiConverterUtils = new OpenApiConverter();
+        openApiConverterUtils.generateOAS3DefinitionsAllService(ballerinaFilePath, this.tempDir, null
+                , false);
+        Assert.assertTrue(openApiConverterUtils.getErrors().isEmpty());
+        TestUtils.compareWithGeneratedFile(ballerinaFilePath, "response/response_code.yaml");
+    }
+
+    @Test(description = "When the response has return record without no body field")
+    public void testForNoContentReturnCode() throws IOException {
+        Path ballerinaFilePath = RES_DIR.resolve("response/without_body_field.bal");
+        OpenApiConverter openApiConverterUtils = new OpenApiConverter();
+        openApiConverterUtils.generateOAS3DefinitionsAllService(ballerinaFilePath, this.tempDir, null
+                , false);
+        Assert.assertTrue(openApiConverterUtils.getErrors().isEmpty());
+        TestUtils.compareWithGeneratedFile(ballerinaFilePath, "response/no_body_field.yaml");
+    }
+
+    @Test(description = "When the response has float return type")
+    public void testResponseWithFloatReturnType() throws IOException {
+        Path ballerinaFilePath = RES_DIR.resolve("response/float.bal");
+        OpenApiConverter openApiConverterUtils = new OpenApiConverter();
+        openApiConverterUtils.generateOAS3DefinitionsAllService(ballerinaFilePath, this.tempDir, null
+                , false);
+        Assert.assertTrue(openApiConverterUtils.getErrors().isEmpty());
+        TestUtils.compareWithGeneratedFile(ballerinaFilePath, "response/float.yaml");
+    }
+
+    @Test(description = "When the response has decimal return type")
+    public void testResponseWithDecimalReturnType() throws IOException {
+        Path ballerinaFilePath = RES_DIR.resolve("response/decimal.bal");
+        OpenApiConverter openApiConverterUtils = new OpenApiConverter();
+        openApiConverterUtils.generateOAS3DefinitionsAllService(ballerinaFilePath, this.tempDir, null
+                , false);
+        Assert.assertTrue(openApiConverterUtils.getErrors().isEmpty());
+        TestUtils.compareWithGeneratedFile(ballerinaFilePath, "response/decimal.yaml");
+    }
+
     @AfterMethod
     public void cleanUp() {
         TestUtils.deleteDirectory(this.tempDir);

@@ -18,10 +18,8 @@
 
 package io.ballerina.openapi.converter;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,7 +27,6 @@ import java.util.Map;
  */
 public class Constants {
     public static final String ATTR_HOST = "host";
-    public static final String ATTR_DEF_HOST = "localhost";
     public static final String INT = "int";
     public static final String INTEGER = "integer";
     public static final String NUMBER = "number";
@@ -37,21 +34,14 @@ public class Constants {
     public static final String BOOLEAN = "boolean";
     public static final String DECIMAL = "decimal";
     public static final String ARRAY = "array";
-    public static final String RECORD = "record";
-    public static final String OBJECT = "object";
     public static final String FLOAT = "float";
     public static final String DOUBLE = "double";
     public static final String TYPE_REFERENCE = "type_reference";
     public static final String PATH = "path";
-    public static final String QUERY = "query";
     public static final String BODY = "body";
-    public static final String HEADER = "header";
-    public static final String COOKIE = "cookie";
-    public static final String FORM = "form";
     public static final String HTTP_PAYLOAD = "http:Payload";
     public static final String HTTP = "http";
     public static final String BALLERINA = "ballerina";
-    public static final String PAYLOAD = "payload";
     public static final String TYPEREFERENCE = "typeReference";
     public static final String HTTP_HEADER = "http:Header";
     public static final String BYTE_ARRAY = "byte[]";
@@ -137,69 +127,59 @@ public class Constants {
         }
     }
 
-    /**
-     * Http response status code.
-     */
-    public static final List<String> STATUS_CODE_RESPONSE = Collections.unmodifiableList(
-            Arrays.asList(
-            "Continue", "SwitchingProtocols", "Ok", "Created", "Accepted", "NonAuthoritativeInformation", "NoContent",
-    "ResetContent", "PartialContent", "MultipleChoices", "MovedPermanently", "Found", "SeeOther", "NotModified",
-                    "UseProxy", "TemporaryRedirect", "PermanentRedirect", "BadRequest", "Unauthorized",
-                    "PaymentRequired", "Forbidden", "NotFound", "MethodNotAllowed", "NotAcceptable",
-                    "ProxyAuthenticationRequired", "RequestTimeout", "Conflict", "Gone", "LengthRequired",
-                    "PreconditionFailed", "PayloadTooLarge", "UriTooLong", "UnsupportedMediaType",
-                    "RangeNotSatisfiable", "ExpectationFailed", "UpgradeRequired", "RequestHeaderFieldsTooLarge",
-                    "InternalServerError", "NotImplemented", "BadGateway", "ServiceUnavailable", "GatewayTimeout",
-                    "HttpVersionNotSupported"));
 
     public static final Map<String, String> HTTP_CODES;
     static {
-        Map<String, String> aMap = new HashMap<>();
-        aMap.put("Continue", "100");
-        aMap.put("SwitchingProtocols", "101");
-        aMap.put("Ok", "200");
-        aMap.put("Created", "201");
-        aMap.put("Accepted", "202");
-        aMap.put("NonAuthoritativeInformation", "203");
-        aMap.put("NoContent", "204");
-        aMap.put("RestContent", "205");
-        aMap.put("PartialContent", "206");
-        aMap.put("MultipleChoices", "300");
-        aMap.put("MovedPermanently", "301");
-        aMap.put("Found", "302");
-        aMap.put("SeeOther", "303");
-        aMap.put("NotModified", "304");
-        aMap.put("UseProxy", "305");
-        aMap.put("TemporaryRedirect", "308");
-        aMap.put("BadRequest", "400");
-        aMap.put("Unauthorized", "401");
-        aMap.put("PaymentRequired", "402");
-        aMap.put("Forbidden", "403");
-        aMap.put("NotFound", "404");
-        aMap.put("MethodNotAllowed", "405");
-        aMap.put("NotAcceptable", "406");
-        aMap.put("ProxyAuthenticationRequires", "407");
-        aMap.put("RequestTimeOut", "408");
-        aMap.put("Conflict", "409");
-        aMap.put("Gone", "410");
-        aMap.put("LengthRequired", "411");
-        aMap.put("PreconditionFailed", "412");
-        aMap.put("UriTooLong", "413");
-        aMap.put("UnsupportedMediaType", "414");
-        aMap.put("RangeNotSatisfied", "415");
-        aMap.put("ExpectationFailed", "416");
-        aMap.put("UpgradeRequired", "426");
-        aMap.put("RequestHeaderFieldsTooLarge", "431");
-        aMap.put("InternalServerError", "500");
-        aMap.put("NotImplemented", "501");
-        aMap.put("BadGateway", "502");
-        aMap.put("ServiceUnavailable", "503");
-        aMap.put("GatewayTimeOut", "504");
-        aMap.put("HttpVersionNotSupported", "505");
-        HTTP_CODES = Collections.unmodifiableMap(aMap);
+        Map<String, String> httpCodeMap = new HashMap<>();
+        httpCodeMap.put("Continue", "100");
+        httpCodeMap.put("SwitchingProtocols", "101");
+        httpCodeMap.put("Ok", "200");
+        httpCodeMap.put("Created", "201");
+        httpCodeMap.put("Accepted", "202");
+        httpCodeMap.put("NonAuthoritativeInformation", "203");
+        httpCodeMap.put("NoContent", "204");
+        httpCodeMap.put("RestContent", "205");
+        httpCodeMap.put("PartialContent", "206");
+        httpCodeMap.put("MultipleChoices", "300");
+        httpCodeMap.put("MovedPermanently", "301");
+        httpCodeMap.put("Found", "302");
+        httpCodeMap.put("SeeOther", "303");
+        httpCodeMap.put("NotModified", "304");
+        httpCodeMap.put("UseProxy", "305");
+        httpCodeMap.put("TemporaryRedirect", "307");
+        httpCodeMap.put("PermanentRedirect", "308");
+        httpCodeMap.put("BadRequest", "400");
+        httpCodeMap.put("Unauthorized", "401");
+        httpCodeMap.put("PaymentRequired", "402");
+        httpCodeMap.put("Forbidden", "403");
+        httpCodeMap.put("NotFound", "404");
+        httpCodeMap.put("MethodNotAllowed", "405");
+        httpCodeMap.put("NotAcceptable", "406");
+        httpCodeMap.put("ProxyAuthenticationRequired", "407");
+        httpCodeMap.put("RequestTimeOut", "408");
+        httpCodeMap.put("Conflict", "409");
+        httpCodeMap.put("Gone", "410");
+        httpCodeMap.put("LengthRequired", "411");
+        httpCodeMap.put("PreconditionFailed", "412");
+        httpCodeMap.put("PayloadTooLarge", "413");
+        httpCodeMap.put("UriTooLong", "414");
+        httpCodeMap.put("UnsupportedMediaType", "415");
+        httpCodeMap.put("RangeNotSatisfiable", "416");
+        httpCodeMap.put("ExpectationFailed", "417");
+        httpCodeMap.put("UpgradeRequired", "426");
+        httpCodeMap.put("TooManyRequests", "429");
+        httpCodeMap.put("RequestHeaderFieldsTooLarge", "431");
+        httpCodeMap.put("InternalServerError", "500");
+        httpCodeMap.put("NotImplemented", "501");
+        httpCodeMap.put("BadGateway", "502");
+        httpCodeMap.put("ServiceUnavailable", "503");
+        httpCodeMap.put("GatewayTimeOut", "504");
+        httpCodeMap.put("HttpVersionNotSupported", "505");
+        HTTP_CODES = Collections.unmodifiableMap(httpCodeMap);
     }
     public static final String HTTP_200 = "200";
     public static final String HTTP_200_DESCRIPTION = "Ok";
+    public static final String HTTP_204 = "204";
     public static final String SPECIAL_CHAR_REGEX = "([\\[\\]\\\\?!<>@#&~`*\\-=^+();:\\/\\_{}\\s|.$])";
 
     //Cache config constant
@@ -230,4 +210,6 @@ public class Constants {
     public static final String JSON_EXTENSION = ".json";
     public static final String YML_EXTENSION = ".yml";
     public static final String PLUS = "+";
+    public static final String UNDERSCORE = "_";
+
 }

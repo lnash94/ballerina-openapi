@@ -102,6 +102,7 @@ import static io.ballerina.openapi.generators.GeneratorConstants.URL;
 public class BallerinaUtilGenerator {
 
     private boolean headersFound = false;
+    private boolean pathParametersFound = false;
     private boolean queryParamsFound = false;
     private boolean requestBodyEncodingFound = false;
     private boolean requestBodyMultipartFormDatafound = false;
@@ -134,6 +135,15 @@ public class BallerinaUtilGenerator {
      */
     public void setHeadersFound(boolean flag) {
         this.headersFound = flag;
+    }
+
+    /**
+     * Set `pathParametersFound` flag to `true` when at least one path parameter found.
+     *
+     * @param flag     Function will be called only in the occasions where flag needs to be set to `true`
+     */
+    public void setPathParametersFound(boolean flag) {
+        this.pathParametersFound = flag;
     }
 
     /**
@@ -177,6 +187,9 @@ public class BallerinaUtilGenerator {
         }
         if (headersFound) {
             functionNameList.add(GET_MAP_FOR_HEADERS);
+        }
+        if (pathParametersFound) {
+            functionNameList.add(GET_ENCODED_URI);
         }
         if (requestBodyMultipartFormDatafound) {
             functionNameList.add(CREATE_MULTIPART_BODY_PARTS);
@@ -376,15 +389,15 @@ public class BallerinaUtilGenerator {
     }
 
     /**
-     * Gets the path of the utils.bal template at the time of execution.
+     * Gets the path of the utils_openapi.bal template at the time of execution.
      *
-     * @return  Path to utils.bal file in the temporary directory created
-     * @throws  IOException     When failed to get the templates/utils.bal file from resources
+     * @return  Path to utils_openapi.bal file in the temporary directory created
+     * @throws  IOException     When failed to get the templates/utils_openapi.bal file from resources
      */
     private Path getResourceFilePath() throws IOException {
         Path path = null;
         ClassLoader classLoader = getClass().getClassLoader();
-        InputStream inputStream = classLoader.getResourceAsStream("templates/utils.bal");
+        InputStream inputStream = classLoader.getResourceAsStream("templates/utils_openapi.bal");
         if (inputStream != null) {
             String clientSyntaxTreeString = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             Path tmpDir = Files.createTempDirectory(".util-tmp" + System.nanoTime());
