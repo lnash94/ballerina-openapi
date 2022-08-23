@@ -23,6 +23,7 @@ import io.ballerina.openapi.exception.BallerinaOpenApiException;
 import io.ballerina.openapi.generators.common.TestUtils;
 import io.ballerina.tools.diagnostics.Diagnostic;
 import io.swagger.v3.oas.models.OpenAPI;
+import org.ballerinalang.formatter.core.Formatter;
 import org.ballerinalang.formatter.core.FormatterException;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
@@ -98,6 +99,7 @@ public class ConstraintTests {
         BallerinaTypesGenerator ballerinaSchemaGenerator = new BallerinaTypesGenerator(openAPI);
 
         SyntaxTree syntaxTree = ballerinaSchemaGenerator.generateSyntaxTree();
+        System.out.println(Formatter.format(syntaxTree));
         TestUtils.compareGeneratedSyntaxTreewithExpectedSyntaxTree("schema/ballerina/constraint/record_field_02.bal",
                 syntaxTree);
         List<Diagnostic> diagnostics = getDiagnostics(syntaxTree);

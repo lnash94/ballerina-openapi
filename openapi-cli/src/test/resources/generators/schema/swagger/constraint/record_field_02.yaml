@@ -58,3 +58,41 @@ components:
           minimum: 1
           type: integer
           format: int32
+        service_class:
+          description: field with nullable.
+          maxLength: 5000
+          nullable: true
+          type: string
+        tax_rates:
+          oneOf:
+            - items:
+                maxLength: 5000
+                type: string
+              type: array
+              maxItems: 6
+            - type: integer
+        tax_rates_anyOf:
+          anyOf:
+            - items:
+                maxLength: 5000
+                type: string
+              type: array
+              maxItems: 6
+            - type: integer
+        tax_rates_oneOF_array:
+          oneOf:
+            - items:
+                maxLength: 5000
+                type: string
+              type: array
+              maxItems: 6
+        tax_rates_anyOf_array:
+          anyOf:
+            - items:
+                - anyOf:
+                    - type: integer
+                      maximum: 60
+                    - type: string
+              type: array
+              maxItems: 6
+            - type: integer
