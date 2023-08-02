@@ -95,6 +95,7 @@ public class OpenAPIComponentMapper {
         }
         // Getting main record description
         String componentName = ConverterCommonUtils.unescapeIdentifier(typeSymbol.getName().orElseThrow().trim());
+        visitedTypeDefinitionNames.add(componentName);
         Map<String, String> apiDocs = getRecordFieldsAPIDocsMap((TypeReferenceTypeSymbol) typeSymbol, componentName);
         String typeDoc = null;
         if (apiDocs.size() > 0) {
@@ -222,7 +223,6 @@ public class OpenAPIComponentMapper {
      * Creating API docs related to given record fields.
      */
     private Map<String, String> getRecordFieldsAPIDocsMap(TypeReferenceTypeSymbol typeSymbol, String componentName) {
-
         Map<String, String> apiDocs = new LinkedHashMap<>();
         Symbol recordSymbol = typeSymbol.definition();
         Optional<Documentation> documentation = ((Documentable) recordSymbol).documentation();
@@ -320,7 +320,8 @@ public class OpenAPIComponentMapper {
             if (fieldTypeKind == TypeDescKind.TYPE_REFERENCE) {
                 TypeReferenceTypeSymbol typeReference = (TypeReferenceTypeSymbol) field.getValue().typeDescriptor();
                 property = handleTypeReference(schema, typeReference, property,
-                        isSameRecord(ConverterCommonUtils.unescapeIdentifier(typeReference.definition().getName().get()),
+                        isSameRecord(ConverterCommonUtils.unescapeIdentifier(
+                                typeReference.definition().getName().get()),
                                 typeReference));
                 schema = components.getSchemas();
             } else if (fieldTypeKind == TypeDescKind.UNION) {
@@ -405,6 +406,7 @@ public class OpenAPIComponentMapper {
      */
     private Schema handleUnionType(UnionTypeSymbol unionType, Schema property, String parentComponentName) {
         List<TypeSymbol> unionTypes = unionType.memberTypeDescriptors();
+        Map<String, Schema> schemas = this.components.getSchemas();
         List<Schema> properties = new ArrayList<>();
         boolean nullable = false;
         for (TypeSymbol union : unionTypes) {
@@ -417,8 +419,9 @@ public class OpenAPIComponentMapper {
                 }
                 property = ConverterCommonUtils.getOpenApiSchema(union.typeKind().getName().trim());
                 TypeReferenceTypeSymbol typeReferenceTypeSymbol = (TypeReferenceTypeSymbol) union;
-                property = handleTypeReference(this.components.getSchemas(), typeReferenceTypeSymbol, property,
+                property = handleTypeReference(schemas, typeReferenceTypeSymbol, property,
                         isSameRecord(parentComponentName, typeReferenceTypeSymbol));
+                visitedTypeDefinitionNames.add(typeReferenceTypeSymbol.getName().get());
                 properties.add(property);
             } else if (union.typeKind() == TypeDescKind.UNION) {
                 property = handleUnionType((UnionTypeSymbol) union, property, parentComponentName);
@@ -432,7 +435,6 @@ public class OpenAPIComponentMapper {
                 Schema openApiSchema = ConverterCommonUtils.getOpenApiSchema(typeDescKind.getName());
                 property = new ObjectSchema().additionalProperties(openApiSchema);
                 properties.add(property);
-                Map<String, Schema> schemas = components.getSchemas();
                 if (schemas != null) {
                     schemas.put(parentComponentName, property);
                 } else {
@@ -499,6 +501,7 @@ public class OpenAPIComponentMapper {
      */
     private ArraySchema mapArrayToArraySchema(Map<String, Schema> schema, TypeSymbol symbol,
                                               String componentName) {
+        visitedTypeDefinitionNames.add(componentName);
         ArraySchema property = new ArraySchema();
         int arrayDimensions = 0;
         while (symbol instanceof ArrayTypeSymbol) {
@@ -579,17 +582,18 @@ public class OpenAPIComponentMapper {
     /**
      * This util function is to handle the type reference symbol is record type or enum type.
      */
-    private Schema getSchemaForTypeReferenceSymbol(TypeSymbol arrayType, Schema symbolProperty, String componentName,
-                                                   Map<String, Schema> schema) {
+    private Schema getSchemaForTypeReferenceSymbol(TypeSymbol referenceType, Schema symbolProperty,
+                                                   String componentName, Map<String, Schema> schema) {
 
-        if (((TypeReferenceTypeSymbol) arrayType).definition().kind() == SymbolKind.ENUM) {
-            TypeReferenceTypeSymbol typeRefEnum = (TypeReferenceTypeSymbol) arrayType;
+        visitedTypeDefinitionNames.add(referenceType.getName().get());
+        if (((TypeReferenceTypeSymbol) referenceType).definition().kind() == SymbolKind.ENUM) {
+            TypeReferenceTypeSymbol typeRefEnum = (TypeReferenceTypeSymbol) referenceType;
             EnumSymbol enumSymbol = (EnumSymbol) typeRefEnum.definition();
             symbolProperty = mapEnumValues(enumSymbol);
         } else {
             symbolProperty.set$ref(ConverterCommonUtils.unescapeIdentifier(
-                    arrayType.getName().orElseThrow().trim()));
-            TypeReferenceTypeSymbol typeRecord = (TypeReferenceTypeSymbol) arrayType;
+                    referenceType.getName().orElseThrow().trim()));
+            TypeReferenceTypeSymbol typeRecord = (TypeReferenceTypeSymbol) referenceType;
             if (!isSameRecord(componentName, typeRecord)) {
                 createComponentSchema(schema, typeRecord);
             }
