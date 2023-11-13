@@ -23,10 +23,12 @@ import io.ballerina.compiler.syntax.tree.AnnotationNode;
 import io.ballerina.compiler.syntax.tree.ArrayTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.BuiltinSimpleNameReferenceNode;
 import io.ballerina.compiler.syntax.tree.DefaultableParameterNode;
+import io.ballerina.compiler.syntax.tree.ListConstructorExpressionNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeList;
 import io.ballerina.compiler.syntax.tree.OptionalTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
+import io.ballerina.compiler.syntax.tree.SeparatedNodeList;
 import io.ballerina.compiler.syntax.tree.SimpleNameReferenceNode;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.compiler.syntax.tree.TypeDescriptorNode;
@@ -192,8 +194,30 @@ public class OpenAPIQueryParameterMapper {
 
         if (Arrays.stream(validExpressionKind).anyMatch(syntaxKind -> syntaxKind ==
                 defaultableQueryParam.expression().kind())) {
-            String defaultValue = defaultableQueryParam.expression().toString().replaceAll("\"", "");
-            if (defaultableQueryParam.expression().kind() == NIL_LITERAL) {
+            SyntaxKind kind = defaultableQueryParam.expression().kind();
+            Object defaultValue;
+            if (kind == LIST_CONSTRUCTOR) {
+                SeparatedNodeList<Node> expressions = ((ListConstructorExpressionNode) defaultableQueryParam.expression()).expressions();
+                Object[] values = new Object[expressions.size()];
+                int i = 0;
+                for(Node node: expressions) {
+                    SyntaxKind NodeKind = node.kind();
+                    if (NodeKind == STRING_LITERAL) {
+                        values[i] = node.toString().replaceAll("\"", "");
+                    } else if (NodeKind == NUMERIC_LITERAL) {
+                        values[i] = Integer.parseInt(node.toString());
+                    } else if (NodeKind == BOOLEAN_LITERAL) {
+                        values[i] = Boolean.parseBoolean(node.toString());
+                    }
+//                    values[i] = Integer.parseInt(node.toString());
+                    i++;
+                }
+                defaultValue = values;
+            } else {
+                defaultValue = defaultableQueryParam.expression().toString().replaceAll("\"", "");
+            }
+
+            if (kind == NIL_LITERAL) {
                 defaultValue = null;
             }
             if (queryParameter.getContent() != null) {
