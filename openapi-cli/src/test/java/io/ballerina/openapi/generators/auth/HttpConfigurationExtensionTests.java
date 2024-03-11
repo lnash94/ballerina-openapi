@@ -20,7 +20,8 @@ package io.ballerina.openapi.generators.auth;
 
 import io.ballerina.openapi.core.GeneratorUtils;
 import io.ballerina.openapi.core.exception.BallerinaOpenApiException;
-import io.ballerina.openapi.core.generators.client.BallerinaAuthConfigGenerator;
+import io.ballerina.openapi.core.generators.client.AuthConfigGenerator;
+import io.ballerina.openapi.core.generators.client.AuthConfigGeneratorImp;
 import io.ballerina.openapi.generators.common.TestConstants;
 import io.swagger.v3.oas.models.OpenAPI;
 import org.testng.Assert;
@@ -29,6 +30,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Objects;
 
 /**
@@ -40,8 +42,8 @@ public class HttpConfigurationExtensionTests {
 
     @Test(description = "Generate config record when http version is given")
     public void testGetConfigRecordGeneration() throws IOException, BallerinaOpenApiException {
-        BallerinaAuthConfigGenerator ballerinaAuthConfigGenerator = new BallerinaAuthConfigGenerator(
-                false, false);
+        AuthConfigGeneratorImp ballerinaAuthConfigGenerator = new AuthConfigGeneratorImp(
+                false, false, new ArrayList<>());
         Path definitionPath = RES_DIR.resolve("scenarios/http_config_extension/petstore_with_http_version.yaml");
         OpenAPI openAPI = GeneratorUtils.getOpenAPIFromOpenAPIV3Parser(definitionPath);
         ballerinaAuthConfigGenerator.addAuthRelatedRecords(openAPI);
@@ -55,8 +57,8 @@ public class HttpConfigurationExtensionTests {
 
     @Test(description = "Generate config record when invalid http version is given")
     public void testGetConfigRecordGenerationForInvalidHTTPVersion() throws IOException, BallerinaOpenApiException {
-        BallerinaAuthConfigGenerator ballerinaAuthConfigGenerator = new BallerinaAuthConfigGenerator(
-                false, false);
+        AuthConfigGeneratorImp ballerinaAuthConfigGenerator = new AuthConfigGeneratorImp(
+                false, false, new ArrayList<>());
         Path definitionPath = RES_DIR.resolve(
                 "scenarios/http_config_extension/petstore_with_invalid_http_version.yaml");
         OpenAPI openAPI = GeneratorUtils.getOpenAPIFromOpenAPIV3Parser(definitionPath);

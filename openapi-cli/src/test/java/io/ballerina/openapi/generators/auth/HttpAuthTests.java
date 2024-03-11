@@ -19,20 +19,24 @@
 package io.ballerina.openapi.generators.auth;
 
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.compiler.syntax.tree.ParameterNode;
 import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
 import io.ballerina.openapi.core.GeneratorUtils;
 import io.ballerina.openapi.core.exception.BallerinaOpenApiException;
-import io.ballerina.openapi.core.generators.client.BallerinaAuthConfigGenerator;
+import io.ballerina.openapi.core.generators.client.AuthConfigGenerator;
+import io.ballerina.openapi.core.generators.client.AuthConfigGeneratorImp;
 import io.ballerina.openapi.generators.common.TestConstants;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,8 +50,8 @@ public class HttpAuthTests {
     @Test(description = "Generate config record for http basic auth", dataProvider = "httpAuthIOProvider")
     public void testGetConfigRecord(String yamlFile, String configRecord) throws IOException,
             BallerinaOpenApiException {
-        BallerinaAuthConfigGenerator ballerinaAuthConfigGenerator = new BallerinaAuthConfigGenerator(
-                false, true);
+        AuthConfigGeneratorImp ballerinaAuthConfigGenerator = new AuthConfigGeneratorImp(
+                false, true, new ArrayList<>());
         Path definitionPath = RES_DIR.resolve("scenarios/http/" + yamlFile);
         OpenAPI openAPI = GeneratorUtils.getOpenAPIFromOpenAPIV3Parser(definitionPath);
         Map<String, SecurityScheme> securitySchemeMap = openAPI.getComponents().getSecuritySchemes();
@@ -63,12 +67,11 @@ public class HttpAuthTests {
     @Test(description = "Test the generation of Config params in class init function signature",
             dependsOnMethods = {"testGetConfigRecord"})
     public void testGetConfigParamForClassInit() {
-        BallerinaAuthConfigGenerator ballerinaAuthConfigGenerator = new BallerinaAuthConfigGenerator(
-                false, true);
+        AuthConfigGeneratorImp ballerinaAuthConfigGenerator = new AuthConfigGeneratorImp(
+                false, true, new ArrayList<>());
         String expectedParams = TestConstants.HTTP_CLIENT_CONFIG_PARAM;
         StringBuilder generatedParams = new StringBuilder();
-        List<Node> generatedInitParamNodes = ballerinaAuthConfigGenerator.getConfigParamForClassInit(
-                "https:localhost/8080");
+        List<ParameterNode> generatedInitParamNodes = ballerinaAuthConfigGenerator.getConfigParamForClassInit();
         for (Node param: generatedInitParamNodes) {
             generatedParams.append(param.toString());
         }
@@ -80,8 +83,8 @@ public class HttpAuthTests {
     @Test(description = "Test the generation of http:Client init node",
             dependsOnMethods = {"testGetConfigRecord"})
     public void testGetClientInitializationNode() {
-        BallerinaAuthConfigGenerator ballerinaAuthConfigGenerator = new BallerinaAuthConfigGenerator(
-                false, true);
+        AuthConfigGeneratorImp ballerinaAuthConfigGenerator = new AuthConfigGeneratorImp(
+                false, true, new ArrayList<>());
         String expectedParam = TestConstants.HTTP_CLIENT_DECLARATION;
         VariableDeclarationNode generatedInitParamNode = ballerinaAuthConfigGenerator.getClientInitializationNode();
         expectedParam = (expectedParam.trim()).replaceAll("\\s+", "");

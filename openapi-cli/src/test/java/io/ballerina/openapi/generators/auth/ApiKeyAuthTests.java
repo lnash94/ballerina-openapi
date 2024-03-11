@@ -19,10 +19,12 @@
 package io.ballerina.openapi.generators.auth;
 
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.compiler.syntax.tree.ParameterNode;
 import io.ballerina.compiler.syntax.tree.TypeDefinitionNode;
 import io.ballerina.openapi.core.GeneratorUtils;
 import io.ballerina.openapi.core.exception.BallerinaOpenApiException;
-import io.ballerina.openapi.core.generators.client.BallerinaAuthConfigGenerator;
+import io.ballerina.openapi.core.generators.client.AuthConfigGenerator;
+import io.ballerina.openapi.core.generators.client.AuthConfigGeneratorImp;
 import io.ballerina.openapi.generators.common.TestConstants;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityScheme;
@@ -33,6 +35,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,8 +46,8 @@ import java.util.Optional;
  */
 public class ApiKeyAuthTests {
     private static final Path RES_DIR = Paths.get("src/test/resources/generators/client/").toAbsolutePath();
-    BallerinaAuthConfigGenerator ballerinaAuthConfigGenerator = new BallerinaAuthConfigGenerator(
-            true, false);
+    AuthConfigGeneratorImp ballerinaAuthConfigGenerator = new AuthConfigGeneratorImp(
+            true, false, new ArrayList<>());
 
     @Test(description = "Generate ConnectionConfig record for openweathermap api",
             dataProvider = "apiKeyAuthIOProvider")
@@ -97,8 +100,7 @@ public class ApiKeyAuthTests {
     public void testGetConfigParamForClassInit() {
         String expectedParams = TestConstants.API_KEY_CONFIG_PARAM;
         StringBuilder generatedParams = new StringBuilder();
-        List<Node> generatedInitParamNodes = ballerinaAuthConfigGenerator.getConfigParamForClassInit(
-                "https:localhost/8080");
+        List<ParameterNode> generatedInitParamNodes = ballerinaAuthConfigGenerator.getConfigParamForClassInit();
         for (Node param: generatedInitParamNodes) {
             generatedParams.append(param.toString());
         }
@@ -120,8 +122,8 @@ public class ApiKeyAuthTests {
 
     @Test(description = "Test the generation of api key documentation comment when multiple api keys defined")
     public void testGetApiKeyDescriptionForMultipleApiKeys () throws IOException, BallerinaOpenApiException {
-        BallerinaAuthConfigGenerator ballerinaAuthConfigGenerator = new BallerinaAuthConfigGenerator(
-                true, false);
+        AuthConfigGeneratorImp ballerinaAuthConfigGenerator = new AuthConfigGeneratorImp(
+                true, false, new ArrayList<>());
         Path definitionPath = RES_DIR.resolve("auth/scenarios/api_key/multiple_apikey_descriptions.yaml");
         OpenAPI openAPI = GeneratorUtils.getOpenAPIFromOpenAPIV3Parser(definitionPath);
         Map<String, SecurityScheme> securitySchemeMap = openAPI.getComponents().getSecuritySchemes();
@@ -137,8 +139,8 @@ public class ApiKeyAuthTests {
     @Test(description = "Test ApiKeysConfig record generation for multiple api keys")
     public void testConfigRecordGenForAPIKeyAuth() throws IOException, BallerinaOpenApiException {
         // generate ApiKeysConfig record
-        BallerinaAuthConfigGenerator ballerinaAuthConfigGenerator = new BallerinaAuthConfigGenerator(
-                true, false);
+        AuthConfigGeneratorImp ballerinaAuthConfigGenerator = new AuthConfigGeneratorImp(
+                true, false, new ArrayList<>());
         String expectedConfigRecord = TestConstants.API_KEYS_CONFIG_RECORD;
         Path definitionPath = RES_DIR.resolve("auth/scenarios/api_key/multiple_api_keys.yaml");
         OpenAPI openAPI = GeneratorUtils.getOpenAPIFromOpenAPIV3Parser(definitionPath);
@@ -155,8 +157,8 @@ public class ApiKeyAuthTests {
     @Test(description = "Test ApiKeysConfig record documentation generation for multiline descriptions")
     public void testConfigRecordDocumentationGen() throws IOException, BallerinaOpenApiException {
         // generate ApiKeysConfig record
-        BallerinaAuthConfigGenerator ballerinaAuthConfigGenerator = new BallerinaAuthConfigGenerator(
-                true, false);
+        AuthConfigGeneratorImp ballerinaAuthConfigGenerator = new AuthConfigGeneratorImp(
+                true, false, new ArrayList<>());
         String expectedConfigRecord = TestConstants.MULTI_LINE_API_KEY_DESC;
         Path definitionPath = RES_DIR.resolve("auth/scenarios/api_key/multiline_api_key_desc.yaml");
         OpenAPI openAPI = GeneratorUtils.getOpenAPIFromOpenAPIV3Parser(definitionPath);
