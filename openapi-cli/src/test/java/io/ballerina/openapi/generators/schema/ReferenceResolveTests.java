@@ -23,6 +23,7 @@ import io.ballerina.compiler.syntax.tree.TypeDefinitionNode;
 import io.ballerina.openapi.core.GeneratorUtils;
 import io.ballerina.openapi.core.exception.BallerinaOpenApiException;
 import io.ballerina.openapi.core.generators.client.FunctionSignatureGenerator;
+import io.ballerina.openapi.core.generators.client.FunctionSignatureGeneratorImp;
 import io.ballerina.openapi.core.generators.schema.BallerinaTypesGenerator;
 import io.ballerina.openapi.generators.common.TestUtils;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -93,7 +94,7 @@ public class ReferenceResolveTests {
     public void testRequestBodyReferences() throws IOException, BallerinaOpenApiException {
         OpenAPI openAPI = GeneratorUtils.normalizeOpenAPI(RES_DIR.resolve("swagger" +
                 "/request_body_with_ref.yaml"), true);
-        FunctionSignatureGenerator functionSignatureGenerator = new FunctionSignatureGenerator(openAPI,
+        FunctionSignatureGeneratorImp functionSignatureGenerator = new FunctionSignatureGeneratorImp(openAPI,
                 new BallerinaTypesGenerator(openAPI), new ArrayList<>(), false);
         FunctionSignatureNode signature1 = functionSignatureGenerator.getFunctionSignatureNode(openAPI.getPaths()
                 .get("/pets").getPost(), new ArrayList<>());
