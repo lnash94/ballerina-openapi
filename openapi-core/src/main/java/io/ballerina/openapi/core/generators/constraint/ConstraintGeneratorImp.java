@@ -134,10 +134,7 @@ public class ConstraintGeneratorImp implements ConstraintGenerator {
                                     //todo diagnostic
                                 }
                                 MetadataNode metadataNode;
-                                boolean isConstraintSupport = constraintNode != null &&
-                                        fieldSchema.getNullable() != null &&
-                                        fieldSchema.getNullable() || (fieldSchema.getOneOf() != null ||
-                                        fieldSchema.getAnyOf() != null);
+                                boolean isConstraintSupport = isConstraintSupport(fieldSchema, constraintNode);
                                 boolean nullable = GeneratorMetaData.getInstance().isNullable();
                                 if (nullable) {
                                     constraintNode = null;
@@ -214,10 +211,7 @@ public class ConstraintGeneratorImp implements ConstraintGenerator {
                                 //todo diagnostic
                             }
                             MetadataNode metadataNode;
-                            boolean isConstraintSupport =
-                                    constraintNode != null && value.getNullable() != null && value.getNullable() ||
-                                            ((value.getOneOf() != null ||
-                                                    value.getAnyOf() != null));
+                            boolean isConstraintSupport = isConstraintSupport(value, constraintNode);
                             boolean nullable = GeneratorMetaData.getInstance().isNullable();
                             if (nullable) {
                                 constraintNode = null;
@@ -266,6 +260,15 @@ public class ConstraintGeneratorImp implements ConstraintGenerator {
             sortedTypeDefinitions.put(key, typeDefinitions.get(key));
         });
         return new ConstraintResult(typeDefinitions, isConstraint, diagnostics);
+    }
+
+    private static boolean isConstraintSupport(Schema<?> fieldSchema, AnnotationNode constraintNode) {
+        boolean isConstraintSupport = constraintNode != null &&
+                fieldSchema.getNullable() != null &&
+                fieldSchema.getNullable() || (fieldSchema.getOneOf() != null ||
+                fieldSchema.getAnyOf() != null) || (fieldSchema.getTypes() != null &&
+                !fieldSchema.getTypes().contains("null"));
+        return isConstraintSupport;
     }
 
     private void updateConstraintWithArrayItems(String key, String fieldName, ArraySchema arraySchema) {
