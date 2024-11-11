@@ -30,6 +30,7 @@ import io.ballerina.compiler.syntax.tree.MetadataNode;
 import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.NodeList;
 import io.ballerina.compiler.syntax.tree.ParameterNode;
 import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
@@ -96,6 +97,9 @@ public class ServiceDocCommentGenerator implements DocCommentsGenerator {
         members.forEach(member -> {
             if (member.kind().equals(SyntaxKind.SERVICE_DECLARATION)) {
                 ServiceDeclarationNode classDef = (ServiceDeclarationNode) member;
+                Optional<MetadataNode> metadata = classDef.metadata();
+                //Generate service api doc
+                MetadataNode metadataNode = getServiceMetadataNode(metadata);
                 HashMap<String, Node> updatedList = new HashMap<>();
                 NodeList<Node> classMembers = classDef.members();
                 //sort these members according to .toString();
@@ -130,7 +134,7 @@ public class ServiceDocCommentGenerator implements DocCommentsGenerator {
                     sortedNodes.add(updatedList.get(memberStr));
                 }
                 member = classDef.modify(
-                        classDef.metadata().orElse(null),
+                        metadataNode,
                         classDef.qualifiers(),
                         classDef.serviceKeyword(),
                         classDef.typeDescriptor().orElse(null),
@@ -151,6 +155,19 @@ public class ServiceDocCommentGenerator implements DocCommentsGenerator {
             syntaxTree = syntaxTree.modifyWith(updatedmodulePartNode);
         });
         return syntaxTree;
+    }
+
+    private MetadataNode getServiceMetadataNode(Optional<MetadataNode> metadata) {
+        MarkdownDocumentationNode apiDoc = null;
+        List<Node> documentationLines = new ArrayList<>();
+        // Generate service api doc
+        if (openAPI.getInfo().getDescription() != null && !openAPI.getInfo().getDescription().isBlank()) {
+            documentationLines.addAll(DocCommentsGeneratorUtil.createAPIDescriptionDoc(
+                    openAPI.getInfo().getDescription(), true));
+            apiDoc = createMarkdownDocumentationNode(createNodeList(documentationLines));
+        }
+        return metadata.isPresent() ? createMetadataNode(apiDoc, metadata.get().annotations()) :
+                createMetadataNode(apiDoc, NodeFactory.createEmptyNodeList());
     }
 
     private void extractOperations(HashMap<String, OperationDetails> operationDetailsMap, Paths paths) {
