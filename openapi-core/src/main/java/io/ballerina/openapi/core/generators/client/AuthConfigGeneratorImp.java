@@ -383,6 +383,8 @@ public class AuthConfigGeneratorImp {
      *          # Enables the inbound payload validation functionality which provided by the constraint package.
      *          # Enabled by default
      *          boolean validation = true;
+     *          # Enables or disables relaxed data binding on the service side. Enabled by default
+     *          boolean laxDataBinding = true;
      * |};
      * </pre>
      * Scenario 1 : For openapi contracts with no authentication mechanism given, auth field will not be generated
@@ -1333,7 +1335,18 @@ public class AuthConfigGeneratorImp {
                 validationMetadata, null, validationFieldType, validationFieldName,
                 equalToken, createRequiredExpressionNode(createToken(TRUE_KEYWORD)), semicolonToken);
         recordFieldNodes.add(validateFieldNode);
+
+        // add laxBinding for data binding
+        MetadataNode laxDataBindingMetadata = getMetadataNode("Enables or disables relaxed data binding." +
+                " Enabled by default");
+        IdentifierToken laxDataBindingFieldName = AbstractNodeFactory.createIdentifierToken("laxDataBinding");
+        TypeDescriptorNode laxDataBindingFieldType = createSimpleNameReferenceNode(createIdentifierToken(BOOLEAN));
+        RecordFieldWithDefaultValueNode laxDataBindingFieldNode = NodeFactory.createRecordFieldWithDefaultValueNode(
+                laxDataBindingMetadata, null, laxDataBindingFieldType, laxDataBindingFieldName,
+                equalToken, createRequiredExpressionNode(createToken(TRUE_KEYWORD)), semicolonToken);
+        recordFieldNodes.add(laxDataBindingFieldNode);
         return recordFieldNodes;
+
     }
 
     /**

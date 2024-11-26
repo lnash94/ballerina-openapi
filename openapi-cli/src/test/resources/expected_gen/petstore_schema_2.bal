@@ -82,4 +82,6 @@ public type ConnectionConfig record {|
     http:ProxyConfig proxy?;
     # Enables the inbound payload validation functionality which provided by the constraint package. Enabled by default
     boolean validation = true;
+    # Enables or disables relaxed data binding. Enabled by default
+    boolean laxDataBinding = true;
 |};
