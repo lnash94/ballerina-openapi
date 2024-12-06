@@ -32,13 +32,12 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
+                $ref: '#/components/schemas/User'
               examples:
-                abc:
+                Jessica:
                   value:
-                    Jessica: "[\"123\",\"Jessica\",]"
+                    id: "123"
+                    name: Jessica
         "400":
           description: BadRequest
           content:

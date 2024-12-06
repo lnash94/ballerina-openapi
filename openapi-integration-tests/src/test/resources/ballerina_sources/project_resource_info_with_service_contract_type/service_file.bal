@@ -27,9 +27,10 @@ type OASServiceType service object {
                 "201": {
                     "examples": {
                         "application/json": {
-                            "abc": {
+                            "Jessica": {
                                 "value": {
-                                    "Jessica": "[\"123\",\"Jessica\",]"
+                                    "id" : "123",
+                                    "name": "Jessica"
                                 }
                             }
                         }
@@ -48,7 +49,7 @@ type OASServiceType service object {
             }
         }
     }
-    resource function post user(User user) returns string[];
+    resource function post user(User user) returns User;
 };
 
 public type User record {|
