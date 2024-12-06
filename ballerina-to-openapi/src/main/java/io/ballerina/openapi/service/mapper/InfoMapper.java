@@ -22,13 +22,9 @@ import io.ballerina.compiler.api.symbols.ModuleSymbol;
 import io.ballerina.compiler.api.symbols.Symbol;
 import io.ballerina.compiler.syntax.tree.AnnotationNode;
 import io.ballerina.compiler.syntax.tree.ExpressionNode;
-import io.ballerina.compiler.syntax.tree.LiteralValueToken;
 import io.ballerina.compiler.syntax.tree.MappingConstructorExpressionNode;
 import io.ballerina.compiler.syntax.tree.MappingFieldNode;
-import io.ballerina.compiler.syntax.tree.MarkdownDocumentationLineNode;
-import io.ballerina.compiler.syntax.tree.MarkdownDocumentationNode;
 import io.ballerina.compiler.syntax.tree.MetadataNode;
-import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeList;
 import io.ballerina.compiler.syntax.tree.QualifiedNameReferenceNode;
 import io.ballerina.compiler.syntax.tree.SeparatedNodeList;
@@ -56,7 +52,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.StringJoiner;
 
 import static io.ballerina.openapi.service.mapper.Constants.CONTACT_NAME;
 import static io.ballerina.openapi.service.mapper.Constants.CONTACT_URL;
@@ -107,15 +102,6 @@ public final class InfoMapper {
         String currentServiceName = serviceNode.absoluteResourcePath();
         // 01. Set openAPI inFo section wit package details
         String version = getContractVersion(serviceNode, semanticModel);
-        if (metadata.isPresent()) {
-            MetadataNode metadataNode = metadata.get();
-            if (metadataNode.documentationString().isPresent()) {
-                String doc = getDescription(metadataNode);
-                Info info = new Info();
-                info.setDescription(doc);
-                openAPI.setInfo(info);
-            }
-        }
         if (metadata.isPresent() && !metadata.get().annotations().isEmpty()) {
             MetadataNode metadataNode = metadata.get();
             NodeList<AnnotationNode> annotations = metadataNode.annotations();
@@ -142,53 +128,14 @@ public final class InfoMapper {
     }
 
     /**
-     *
-     * @param metadataNode
-     * @return
-     */
-    private static String getDescription(MetadataNode metadataNode) {
-        Node docNode = metadataNode.documentationString().get();
-        String doc = "";
-        if (docNode.kind().equals(SyntaxKind.MARKDOWN_DOCUMENTATION)) {
-            MarkdownDocumentationNode markdownDocumentationNode = (MarkdownDocumentationNode) docNode;
-            NodeList<Node> nodes = markdownDocumentationNode.documentationLines();
-            List<String> docLines = new ArrayList<>();
-            for (Node node: nodes) {
-                docLines = createDescriptionLines(node);
-            }
-            doc = String.join("\n", docLines);
-        }
-        return doc;
-    }
-
-    private static List<String> createDescriptionLines(Node node) {
-        List<String> docLines = new ArrayList<>();
-        if (node.kind().equals(SyntaxKind.MARKDOWN_DOCUMENTATION_LINE)) {
-            MarkdownDocumentationLineNode lineNode = (MarkdownDocumentationLineNode) node;
-            StringJoiner joiner = new StringJoiner(" ");
-            for (Node documentElement : lineNode.documentElements()) {
-                if (documentElement.kind().equals(SyntaxKind.DOCUMENTATION_DESCRIPTION)) {
-                    String text = ((LiteralValueToken) documentElement).text();
-                    joiner.add(text);
-                }
-            }
-            docLines.add(joiner.toString());
-        }
-        return docLines;
-    }
-
-    /**
      * Generates openAPI Info section when the service base path is absent or `/`.
      */
     private static void setInfoDetailsIfServiceNameAbsent(String openapiFileName, OpenAPI openAPI,
                                                           String currentServiceName, String version) {
-        if (openAPI.getInfo() == null) {
-            openAPI.setInfo(new Info());
-        }
         if (currentServiceName.equals(SLASH) || currentServiceName.isBlank()) {
-            openAPI.getInfo().version(version).title(normalizeTitle(openapiFileName));
+            openAPI.setInfo(new Info().version(version).title(normalizeTitle(openapiFileName)));
         } else {
-            openAPI.getInfo().version(version).title(normalizeTitle(currentServiceName));
+            openAPI.setInfo(new Info().version(version).title(normalizeTitle(currentServiceName)));
         }
     }
 
